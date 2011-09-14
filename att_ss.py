@@ -41,16 +41,14 @@ if __name__ == "__main__":
     win = visual.Window(monitor=mon,units='deg',screen=p.screen_number,
                     fullscr=p.full_screen)
 
-    # Get the fps 
-    fps = 1/(visual.getMsPerFrame(win)[2]/1000)
-
     f = start_data_file(p.subject)
     p.save(f)
     
-    f = save_data(f,'trial','cue','target','amp','correct','rt')
+    f = save_data(f,'trial','cue','target','increase_cue','amp_cue',
+                  'increase_other','amp_other','correct','rt')
 
     # Make the stimuli: 
-    # ================
+    
     # Short-hand:
     fs = p.fixation_size
 
@@ -85,7 +83,8 @@ if __name__ == "__main__":
                               color=p.rgb * p.surr_contrast,
                               size=p.surr_size,
                               sf = p.sf,
-                              pos=[p.ecc, 0])
+                              pos=[p.ecc, 0],
+                              ori = p.surr_ori)
 
     surr_l = visual.PatchStim(win,
                               tex='sin',
@@ -93,7 +92,8 @@ if __name__ == "__main__":
                               color=p.rgb * p.surr_contrast,
                               size=p.surr_size,
                               sf = p.sf,
-                              pos=[-p.ecc, 0])
+                              pos=[-p.ecc, 0],
+                              ori = p.surr_ori)
     
     center_r = visual.PatchStim(win,
                                 tex='sin',
@@ -128,14 +128,11 @@ if __name__ == "__main__":
                                        pos = [p.ecc, 0])
 
 
-    # Start your staircases:
-    # ======================
-
+    # Start staircases:
     stair_cued = Staircase(p.start_amp, p.step)
     stair_other = Staircase(p.start_amp, p.step)
     
     sides = ['r','l'] # Right or left 
-    stim_dir = [1,-1] # Increase or decrease contrast 
 
     # Get subject input to start: 
     Text(win)()
@@ -159,7 +156,7 @@ if __name__ == "__main__":
         cue_side = sides[side_idx]
 
         # Is the cue reliable this trial? 
-        if np.random.rand() > p.cue_reliability:
+        if np.random.rand() < p.cue_reliability:
             cue_true = True
             ask_side = cue_side
         else:
@@ -182,20 +179,22 @@ if __name__ == "__main__":
         core.wait(p.cue_to_stim)
 
         # Randomly choose increasing or decreasing contrast for each side:
-        change_cue = stim_dir[np.random.randint(2)]
-        change_other = stim_dir[np.random.randint(2)]        
+        change_cue = np.sign(np.random.randn())
+        change_other = np.sign(np.random.randn())        
 
         # Calculate how many amps you need to have for the duration, given the
         # fps provided by the monitor: 
-        n_amps = p.refresh_rate * p.stim_dur
+        n_amps = int(np.round(p.refresh_rate * p.stim_dur))
 
+        cue_val = stair_cued.value
+        other_val = stair_other.value
         # What are the current amps: 
-        amp_cue = np.linspace(p.center_contrast + change_cue*stair_cued.value,
-                              p.center_contrast - change_cue*stair_cued.value,
+        amp_cue = np.linspace(p.center_contrast - change_cue*cue_val/2,
+                              p.center_contrast + change_cue*cue_val/2,
                               n_amps)
                               
-        amp_other = np.linspace(p.center_contrast + change_cue*stair_other.value,
-                                p.center_contrast - change_cue*stair_other.value,
+        amp_other = np.linspace(p.center_contrast - change_other*other_val/2,
+                                p.center_contrast + change_other*other_val/2,
                                 n_amps)
                           
         # Get a clock just for this:
@@ -207,13 +206,21 @@ if __name__ == "__main__":
         # We iterate over frames:
         for frame in range(n_amps):
             t = stim_clock.getTime()
-            # Set the contrast of the centers:
-            if cue_side == 'l':
-                center_l.setColor(amp_cue[frame]*p.rgb)
-                center_r.setColor(amp_other[frame]*p.rgb)
+            # Set the contrast of the centers, according to the cue and cue validity:
+            if cue_true:
+                if cue_side == 'l':
+                    center_l.setColor(amp_cue[frame] * p.rgb)
+                    center_r.setColor(amp_other[frame] * p.rgb)
+                else:
+                    center_r.setColor(amp_cue[frame] * p.rgb)
+                    center_l.setColor(amp_other[frame] * p.rgb)
             else:
-                center_r.setColor(amp_cue[frame]*p.rgb)
-                center_l.setColor(amp_other[frame]*p.rgb)
+                if cue_side == 'r':
+                    center_l.setColor(amp_cue[frame] * p.rgb)
+                    center_r.setColor(amp_other[frame] * p.rgb)
+                else:
+                    center_r.setColor(amp_cue[frame] * p.rgb)
+                    center_l.setColor(amp_other[frame] * p.rgb)
             # Set the phase in the 
             for this in [surr_l, surr_r]:
                 # Counter-phase flicker: 
@@ -278,19 +285,28 @@ if __name__ == "__main__":
                         correct = 0
                         response = True
                         rt = clock.getTime()
+
+                    # Update the staircase:
                     stair_to_update.update(correct)
                             
         core.wait(p.iti)
         event.clearEvents()  # keep the event buffer from overflowing
-        # 'trial','cue','target','amp','correct','rt'
+        # Save to file:
         f = save_data(f,
                       trial,
                       cue_side,
                       ask_side,
-                      stair_to_update.value,
+                      change_cue,
+                      cue_val,
+                      change_other,
+                      other_val,
                       correct,
                       rt)
 
     win.close()
     f.close()
-            
+    fig_stem = f.name.split('/')[-1].split('.')[0]
+
+    stair_cued.analyze(fig_name='data/%s_cued.png'%fig_stem)
+    stair_other.analyze(fig_name='data/%s_other.png'%fig_stem)
+    

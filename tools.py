@@ -19,14 +19,19 @@ class GetFromGui(wx.Dialog):
         # Add text label
         wx.StaticText(self, -1, 'Subject ID:', pos=(10,20))
         # Add the subj id text box:
-        self.textbox1 = wx.TextCtrl(self, -1, pos=(100,18), size=(150, -1))
+        self.textbox1 = wx.TextCtrl(self, -1, pos=(100, 18), size=(150, -1))
 
         # Add text label
-        wx.StaticText(self, -1, 'Center orientation:', pos=(10, 50))
-        # Add the SOA text box:
-        self.textbox2 = wx.TextCtrl(self, -1, pos=(100, 50), size=(150, -1))
+        wx.StaticText(self, -1, 'Center ori:', pos=(10, 50))
+        # Add the text box for the center orientation:
+        self.textbox2 = wx.TextCtrl(self, -1, pos=(100, 48), size=(150, -1))
 
-        self.rb_demo = wx.RadioButton(self, -1, 'demo', (100, 100),
+        # Add text label
+        wx.StaticText(self, -1, 'Surr ori:', pos=(10, 80))
+        # Add the text box for the surround orientation:
+        self.textbox3 = wx.TextCtrl(self, -1, pos=(100, 78), size=(150, -1))
+
+        self.rb_demo = wx.RadioButton(self, -1, 'demo', (100, 110),
                                   style=wx.RB_GROUP)
         # Add OK/Cancel buttons
         wx.Button(self, 1, 'Done', (60, 150))
@@ -43,12 +48,18 @@ class GetFromGui(wx.Dialog):
 
         self.success = True
         self.subject = self.textbox1.GetValue()
-        choose_ori = self.textbox2.GetValue()
+        center_ori = self.textbox2.GetValue()
+        surr_ori = self.textbox3.GetValue()
         
-        if choose_ori:
-            self.ori = choose_ori
+        if center_ori:
+            self.center_ori = center_ori
         else:
-            self.ori = 0
+            self.center_ori = 0
+
+        if surr_ori:
+            self.surr_ori = surr_ori
+        else:
+            self.surr_ori = 0
 
         if self.rb_demo.GetValue():
             self.demo=True
@@ -122,7 +133,8 @@ class Params(object):
         if user_choice.success:                
                 user_params = {
                     "subject" : user_choice.subject,
-                    "center_ori" : user_choice.ori,
+                    "center_ori" : user_choice.center_ori,
+                    "surr_ori" : user_choice.surr_ori,
                     "demo": user_choice.demo,
                     }
         else:
@@ -361,7 +373,7 @@ class Staircase(object):
                      1-down staircase 
 
         harder: {-1,1} The direction which would make the task harder. Defaults
-        to -1, which is true for a contrast detection detection task.
+        to -1, which is true for a contrast detection task.
 
         ub: float, the upper bound on possible values in the staircase
         lb: float, the lower bound on possible values in the staircase
@@ -545,3 +557,14 @@ class Staircase(object):
             fig.savefig(fig_name)
 
         return keep_th,lower,upper
+
+# Helper function in order to get rid of small round-off error in the
+# representation of trial contrasts in the staircase object:
+def defloaterrorize(a):
+    # Turn into units of % contrast: 
+    a *= 100
+    # Truncate anything smaller than 1% contrast:
+    a = a.astype(int)
+    # Recover the original units (0-1):
+    a = a/100.0
+    return a
