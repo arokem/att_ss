@@ -6,7 +6,7 @@ p = dict(
     # Display:
     monitor = 'testMonitor',
     full_screen = True,
-    screen_number = 0, #1,
+    screen_number = 1, #1,
     refresh_rate = 60, # Hz
     # Sounds:
     correct_sound = Sound(sound_freq_sweep(2000,2000,.1)),
@@ -18,19 +18,21 @@ p = dict(
     cue_reliability = 0.7,
     # Stimuli:
     res = 128,
-    temporal_freq = 4,
+    temporal_freq = 0, # 0 for no flicker
     sf = 4, # cycles/deg
     ecc = 6, # dva 
     center_size = 3,
     surr_size = 8,
     center_contrast = 0.5,
+    center_c_var = 0.05,
     surr_contrast = 1,
     # Staircase: 
-    start_amp = 0.2,
-    step = 0.05, 
+    start_amp = 0.05,
+    step = 0.01, 
     # Timing: 
-    cue_dur = 0.3,
-    cue_to_stim = 0.05,
-    stim_dur = 0.4, 
+    cue_dur = 0.5,
+    cue_to_stim = 0.3,
+    stim_dur = 0.38,
+    stim_to_stim = 0.4,
     iti = .2,
     )
