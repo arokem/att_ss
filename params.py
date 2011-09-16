@@ -1,7 +1,5 @@
-from tools import sound_freq_sweep,compound_sound
-import numpy as np
+from tools import sound_freq_sweep
 from psychopy.sound import Sound
-from psychopy import visual
 
 p = dict(
     # Display:
@@ -30,8 +28,8 @@ p = dict(
     start_amp = 0.2,
     step = 0.05, 
     # Timing: 
-    cue_dur = 0.5,
-    cue_to_stim = 0.3,
-    stim_dur = 0.25, 
+    cue_dur = 0.3,
+    cue_to_stim = 0.05,
+    stim_dur = 0.4, 
     iti = .2,
     )
