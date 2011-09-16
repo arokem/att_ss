@@ -1,3 +1,4 @@
+import numpy as np
 from tools import sound_freq_sweep
 from psychopy.sound import Sound
 
