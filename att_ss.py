@@ -15,6 +15,7 @@ from numpy.random import random, shuffle, randn
 from tools import *
 from psychopy import visual, core, misc, event
 import psychopy.monitors.calibTools as calib
+import os
 
 def wait_for_key():
     response = False
@@ -32,8 +33,9 @@ if __name__ == "__main__":
     app.MainLoop()
     p.set_by_gui()
         
-    calib.monitorFolder = './calibration/'# over-ride the usual setting of where
-                                      # monitors are stored
+    calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
+                                                         # setting of where
+                                                         # monitors are stored
 
     mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
                                    #argument to win:
