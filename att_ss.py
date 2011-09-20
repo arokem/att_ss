@@ -53,12 +53,12 @@ if __name__ == "__main__":
     fs = p.fixation_size
 
     # Standard fixation:
-    fixation = visual.PatchStim(win, tex=None, mask = 'circle',color=1*p.rgb,
-                                size=fs)
+    fixation = visual.PatchStim(win, tex=None, mask = 'circle',color=0.5*p.rgb,
+                                size= 0.5 * fs)
 
     fixation_surround = visual.PatchStim(win, tex=None, mask='circle',
-                                         color=-1*p.rgb,
-                                         size=fs*1.5)
+                                         color=-0.5*p.rgb,
+                                         size=0.5 * fs * 1.5)
 
     fix = [fixation_surround, fixation]
     
@@ -109,13 +109,13 @@ if __name__ == "__main__":
     divider = dict(l=visual.PatchStim(win,
                                       tex = np.ones((p.res,p.res)),
                                       mask='circle',
-                                      color= -1 * p.rgb,
+                                      color= p.div_color * p.rgb,
                                       size=p.center_size*1.05,
                                       pos = [-p.ecc, 0]),
                    r=visual.PatchStim(win,
                                       tex = np.ones((p.res,p.res)),
                                       mask='circle',
-                                      color= -1 * p.rgb,
+                                      color= p.div_color * p.rgb,
                                       size=p.center_size*1.05, 
                                       pos = [p.ecc, 0]))
                   
@@ -220,20 +220,18 @@ if __name__ == "__main__":
                 # Set the contrasts of the center stimuli:
                 for this in center:
                     center[this].setColor(contrasts[this][interval] * p.rgb)
-                # Only in the first interval
-                if interval == 0:
-                    for this in surround.values():
-                        # Only flicker if temporal_freq is not 0:
-                        if p.temporal_freq:
-                            # Counter-phase flicker: 
-                            this.setContrast(np.sin(ph_rand +
-                                                    t * p.temporal_freq *
-                                                    np.pi *2))
-                        # Draw either way:
-                        this.draw()
-                    for this in divider.values(): 
-                        # This one needs no flicker:
-                        this.draw()
+                for this in surround.values():
+                    # Only flicker if temporal_freq is not 0:
+                    if p.temporal_freq:
+                        # Counter-phase flicker: 
+                        this.setContrast(np.sin(ph_rand +
+                                                t * p.temporal_freq *
+                                                np.pi *2))
+                    # Draw either way:
+                    this.draw()
+                for this in divider.values(): 
+                    # This one needs no flicker:
+                    this.draw()
                 for this in center.values():
                     # Only flicker if temporal_freq is not 0:
                     if p.temporal_freq:
@@ -244,11 +242,20 @@ if __name__ == "__main__":
                     this.draw()
                 for this in fix: this.draw()
                 win.flip()
-
+                
+            # Before going into the second interval, set the contrast for the
+            # other side to be 0:
+            surround[foil_side].setColor(0)
+            divider[foil_side].setColor(0)                
+                
             # Wait for the ISI
             for this in fix: this.draw()
             win.flip()
             core.wait(p.stim_to_stim)
+
+        # Once out of this loop, set the color back for the next trial:
+        surround[foil_side].setColor(p.surr_contrast * p.rgb)
+        divider[foil_side].setColor(p.div_color * p.rgb)
 
         for this in fix: this.draw()
         win.flip()

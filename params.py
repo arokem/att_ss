@@ -18,7 +18,7 @@ p = dict(
     cue_reliability = 0.7,
     # Stimuli:
     res = 128,
-    temporal_freq = 0, # 0 for no flicker
+    temporal_freq = 4, # 0 for no flicker
     sf = 4, # cycles/deg
     ecc = 6, # dva 
     center_size = 3,
@@ -26,6 +26,7 @@ p = dict(
     center_contrast = 0.5,
     center_c_var = 0.05,
     surr_contrast = 1,
+    div_color = -1,
     # Staircase: 
     start_amp = 0.05,
     step = 0.01, 
