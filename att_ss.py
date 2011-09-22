@@ -33,15 +33,19 @@ if __name__ == "__main__":
     app.MainLoop()
     p.set_by_gui()
         
-    calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
+    #calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
                                                          # setting of where
                                                          # monitors are stored
 
-    mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
+    #mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
                                    #argument to win:
                                    
-    win = visual.Window(monitor=mon,units='deg',screen=p.screen_number,
-                        fullscr=p.full_screen)
+    
+    win = visual.Window(
+                                      monitor=p.monitor,
+                                     units='deg',
+                                     screen=p.screen_number,
+                                     fullscr=p.full_screen)
 
     f = start_data_file(p.subject)
     p.save(f)
