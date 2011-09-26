@@ -42,10 +42,10 @@ if __name__ == "__main__":
                                    
     
     win = visual.Window(
-                                      monitor=p.monitor,
-                                     units='deg',
-                                     screen=p.screen_number,
-                                     fullscr=p.full_screen)
+        monitor=p.monitor,
+        units='deg',
+        screen=p.screen_number,
+        fullscr=p.full_screen)
 
     f = start_data_file(p.subject)
     p.save(f)
@@ -305,6 +305,10 @@ if __name__ == "__main__":
                       contrasts['l'][1],
                       correct,
                       rt)
+
+        # Is it time for a break?
+        if trial>0 and np.mod(trial, p.break_trials)==0:
+            Text(win,"Take a break. \n Press any key to continue")()
 
     win.close()
     f.close()

@@ -5,14 +5,15 @@ from psychopy.sound import Sound
 p = dict(
     # Display:
     monitor = 'testMonitor',
-    full_screen = True,
-    screen_number = 1, #1,
+    full_screen = False,
+    screen_number = 0, #1,
     refresh_rate = 60, # Hz
     # Sounds:
     correct_sound = Sound(sound_freq_sweep(2000,2000,.1)),
     incorrect_sound = Sound(sound_freq_sweep(8000, 200, .1)),
     # General:
-    n_trials = 120,
+    n_trials = 250,
+    break_trials = 50,
     fixation_size = 0.25,
     rgb = np.array([1.,1.,1.]),
     cue_reliability = 0.7,
