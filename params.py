@@ -4,7 +4,7 @@ from psychopy.sound import Sound
 
 p = dict(
     # Display:
-    monitor = 'testMonitor',
+    monitor = 'ESI_psychophys',
     full_screen = False,
     screen_number = 0, #1,
     refresh_rate = 60, # Hz
