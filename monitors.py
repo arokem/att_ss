@@ -32,5 +32,14 @@ monitors = [dict(monitor_name = 'cni_lcd', # name of the new monitor
                  This is my desktop monitor in 482 Jordan Hall, but with the
                  gamma calibration from Franco's measurements of the CNI LCD.
                  """ 
+                 ),
+            
+            dict(monitor_name = 'ESI_psychophys', # name of the new monitor
+                 calib_file = 'caliESI_psychophys10262011.csv', # dummy photometer data
+                 width = 47, # approximate width of the screen in cm
+                 distance = 57, # distance from the screen in cm
+                 size = [1680, 1050], # size of the screen in pixels
+                 notes = """ Rough estimate of parameters on a laptop.
+                 just for testing"""
                  )
                  ]
