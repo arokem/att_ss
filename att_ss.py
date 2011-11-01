@@ -227,14 +227,15 @@ if __name__ == "__main__":
                 for this in center:
                     center[this].setColor(contrasts[this][interval] * p.rgb)
                 for this in surround.values():
-                    # Only flicker if temporal_freq is not 0:
-                    if p.temporal_freq:
-                        # Counter-phase flicker: 
-                        this.setContrast(np.sin(ph_rand +
-                                                t * p.temporal_freq *
-                                                np.pi *2))
-                    # Draw either way:
-                    this.draw()
+                    if interval==0 or p.surround_w_target:
+                        # Only flicker if temporal_freq is not 0:
+                        if p.temporal_freq:
+                            # Counter-phase flicker: 
+                            this.setContrast(np.sin(ph_rand +
+                                                    t * p.temporal_freq *
+                                                    np.pi *2))
+                        # Draw either way:
+                        this.draw()
                 for this in divider.values(): 
                     # This one needs no flicker:
                     this.draw()

@@ -31,7 +31,7 @@ class GetFromGui(wx.Dialog):
         # Add the text box for the surround orientation:
         self.textbox3 = wx.TextCtrl(self, -1, pos=(100, 78), size=(150, -1))
 
-        self.rb_demo = wx.RadioButton(self, -1, 'demo', (100, 110),
+        self.rb_swt = wx.RadioButton(self, -1, 'surround with target', (100, 110),
                                   style=wx.RB_GROUP)
         # Add OK/Cancel buttons
         wx.Button(self, 1, 'Done', (60, 150))
@@ -61,10 +61,10 @@ class GetFromGui(wx.Dialog):
         else:
             self.surr_ori = 0
 
-        if self.rb_demo.GetValue():
-            self.demo=True
+        if self.rb_swt.GetValue():
+            self.swt=True
         else:
-            self.demo=False
+            self.swt=False
 
         self.Close()
 
@@ -135,7 +135,7 @@ class Params(object):
                     "subject" : user_choice.subject,
                     "center_ori" : user_choice.center_ori,
                     "surr_ori" : user_choice.surr_ori,
-                    "demo": user_choice.demo,
+                    "surround_w_target": user_choice.swt,
                     }
         else:
             user_choice.Destroy()
