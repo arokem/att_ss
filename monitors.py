@@ -39,7 +39,8 @@ monitors = [dict(monitor_name = 'cni_lcd', # name of the new monitor
                  width = 47, # approximate width of the screen in cm
                  distance = 57, # distance from the screen in cm
                  size = [1680, 1050], # size of the screen in pixels
-                 notes = """ Rough estimate of parameters on a laptop.
-                 just for testing"""
+                 notes = """
+                 This is the psychophysics CRT used at the ESI Frankfurt
+                 """
                  )
                  ]
