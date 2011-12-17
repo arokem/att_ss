@@ -50,8 +50,8 @@ if __name__ == "__main__":
     f = start_data_file(p.subject)
     p.save(f)
     
-    f = save_data(f, 'trial', 'cue_side', 'ask_side', 'r_contrast1', 'r_contrast2',
-                  'l_contrast1', 'l_contrast2', 'correct', 'rt')
+    f = save_data(f, 'trial', 'cue_side', 'ask_side', 'r_contrast1',
+                  'r_contrast2', 'l_contrast1', 'l_contrast2', 'correct', 'rt')
 
     # Make the stimuli: 
     

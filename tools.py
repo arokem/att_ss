@@ -5,7 +5,6 @@ import numpy as np
 import wx
 
 from psychopy import core, visual, event, gui
-from psychopy.sound import Sound as Sound
 
 from matplotlib.mlab import window_hanning,csv2rec
 import matplotlib.pyplot as plt
@@ -190,6 +189,8 @@ def sound_freq_sweep(startFreq, endFreq, duration, samples_per_sec=None):
 
 
     """
+    from psychopy.sound import Sound as Sound
+
     if samples_per_sec is None:
         samples_per_sec = 44100
 
