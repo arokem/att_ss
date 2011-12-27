@@ -55,7 +55,8 @@ if __name__ == "__main__":
     p.save(f)
     
     f = save_data(f, 'trial', 'cue_side', 'ask_side', 'r_contrast1',
-                  'r_contrast2', 'l_contrast1', 'l_contrast2', 'answer', 'rt')
+                  'r_contrast2', 'l_contrast1', 'l_contrast2', 'answer',
+                  'ask_contrast', 'rt')
 
     # Make the stimuli: 
     
@@ -154,10 +155,21 @@ if __name__ == "__main__":
     # Wait for an iti before starting the first trial:
     core.wait(p.iti)
 
-    contrast_randomizer = np.mod(np.random.permutation(p.n_trials),
-                                 p.center_contrast.shape[0])
-
-    center_contrast = p.center_contrast[contrast_randomizer]
+    conds = []
+    # How many conditions are there:
+    for center_c in p.center_contrast:
+        for center_comp in p.center_comparison:
+            conds.append([center_c, center_comp])
+    conds = np.array(conds)
+    n_conds = conds.shape[0]
+    
+    cond_randomizer = np.mod(np.random.permutation(p.n_trials), n_conds)
+    center_contrast1 = conds[cond_randomizer][:,0]
+    center_comparison1 = conds[cond_randomizer][:,1]
+    # Randomize again the for the foil side:
+    cond_randomizer = np.mod(np.random.permutation(p.n_trials), n_conds)
+    center_contrast2 = conds[cond_randomizer][:, 0]
+    center_comparison2 = conds[cond_randomizer][:,1]
     
     for trial in xrange(p.n_trials):
         # Randomly choose a side for the cue:
@@ -179,19 +191,17 @@ if __name__ == "__main__":
         contrasts = {}
 
         # The second contrast is always the baseline and the question is always
-        # whether the other contrast is higher or lower than that, where the
-        # first interval contrast is chosen randomly and separately for each
-        # side:  
+        # whether the first contrast is higher or lower than that, where the
+        # first interval contrast was set pseudo-randomly above:
+        ask_contrast = center_comparison1[trial]
         contrasts[ask_side] = [
-            center_contrast[trial] + p.center_comparison[
-                np.floor(np.random.rand() * p.center_comparison.shape[0])], 
-            center_contrast[trial]
+            center_contrast1[trial] + ask_contrast, 
+            center_contrast1[trial]
             ]
 
-        # For the other side, the second contrast is always 0: 
+        # For the foil side, the second contrast is always 0: 
         contrasts[foil_side] = [
-            center_contrast[trial] + p.center_comparison[
-                np.floor(np.random.rand() * p.center_comparison.shape[0])], 
+            center_contrast2[trial] + center_comparison2[trial], 
                 0]
         
         #Draw the cue, wait for the alloted time and move on:
@@ -284,6 +294,7 @@ if __name__ == "__main__":
                       contrasts['l'][0],
                       contrasts['l'][1],
                       key,
+                      ask_contrast,
                       rt)
 
         # Is it time for a break?
@@ -292,4 +303,12 @@ if __name__ == "__main__":
 
     win.close()
     f.close()
-    
+    fig_stem = f.name.split('/')[-1].split('.')[0]
+
+    # Per default the analysis proceeds with cumulative Gaussian as the
+    # fit function:
+    analyze_constant(f.name, fig_name='data/%s_cued.png'%fig_stem,
+                     cue_cond='cued')
+    analyze_constant(f.name, fig_name='data/%s_other.png'%fig_stem,
+                     cue_cond='other')
+     

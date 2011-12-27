@@ -6,9 +6,11 @@ import wx
 
 from psychopy import core, visual, event, gui
 
+import matplotlib
 from matplotlib.mlab import window_hanning,csv2rec
 import matplotlib.pyplot as plt
 from scipy.optimize import leastsq
+from scipy.special import erf
 
 #User input GUI:
 class GetFromGui(wx.Dialog):
@@ -569,3 +571,136 @@ def defloaterrorize(a):
     # Recover the original units (0-1):
     a = a/100.0
     return a
+
+def get_data(file_name=None):
+    """
+    Get the data from file, returning parameters, the line with variable names
+    and a data_rec using these variable names.
+
+    """
+
+    if file_name is None: 
+        path_to_files = './data/'
+        file_name =  str(gui.fileOpenDlg(path_to_files)[0])
+    
+    file_read = file(file_name,'r')
+    l = file_read.readline()
+    p = {} #This will hold the params
+    l = file_read.readline()
+    data_rec = []
+    
+    if l=='':
+        return p,l,data_rec
+
+    while l[0]=='#':
+        try:
+            p[l[1:l.find(':')-1]]=float(l[l.find(':')+1:l.find('\n')]) 
+        except:
+            p[l[2:l.find(':')-1]]=l[l.find(':')+1:l.find('\n')]
+        l = file_read.readline()
+
+    try:
+        data_rec = csv2rec(file_name)
+    except ValueError:
+        p = []
+    
+    return p,l,data_rec
+
+def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
+                     fitfunc='cumgauss'):
+    """
+    This analyzes data from the constant stimuli experiment
+    """
+    
+    def cumgauss(x, mu,sigma):
+        """
+        The cumulative Gaussian at x, for the distribution with mean mu and
+        standard deviation sigma.
+
+        Based on: http://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
+        """
+        return 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
+
+    def cumgauss_fit(params):
+        """
+        fit func
+        """
+        mu,sigma = params
+        return cumgauss(x, mu, sigma)
+
+    def err_func(params):
+        """
+        Error function
+        """
+        return y-cumgauss_fit(params)
+
+    p,l,data_rec = get_data(data_file)
+
+    if cue_cond == 'cued':
+        cue_cond_idx = np.where(data_rec['cue_side']==data_rec['ask_side'])[0]
+    elif cue_cond == 'other':
+        cue_cond_idx = np.where(data_rec['cue_side']!=data_rec['ask_side'])[0]
+
+    center_contrasts = [float(t) for t in
+    p['center_contrast'].split('[')[1].split(']')[0].split(' ')[1::2]]
+    
+    base_contrast = []
+    for i,ask_side in enumerate(data_rec['ask_side'][cue_cond_idx]):
+        base_contrast.append(data_rec[ask_side + '_contrast2'][cue_cond_idx][i])
+
+    if fig_name is not None: 
+        # Get the color cycle from the mpl rc params:
+        rc = matplotlib.rc_params()
+        colors = rc['axes.color_cycle'][:len(center_contrasts)]
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+
+    fits = []
+    keep_x = []
+    keep_y = []
+    min_x=1
+    max_x=0
+    for contrast in center_contrasts:
+        c_idx = np.where(np.abs(np.array(base_contrast)-contrast)<0.01)[0]
+        this_ask = data_rec['ask_contrast'][cue_cond_idx][c_idx]
+        # Move it into the interval [0,1] with the right directionality: when
+        # the value of this_ask was high, the chances were higher for a '1'
+        # answer than for a '2' answer (that's the "1 - " at the beginning of
+        # next line):
+        this_ans = 1 - (data_rec['answer'][cue_cond_idx][c_idx] - 1) 
+        x = np.array(contrast) + this_ask
+        y = []
+        for i in range(len(this_ans)):
+            y.append(np.mean(this_ans[this_ask==this_ask[i]]))
+
+        # Begin by guessing that the mean is the same as the contrast shown
+        # (no bias):
+        initial = contrast, 1
+        this_fit, msg = leastsq(err_func, initial)
+
+        # Store stuff for plotting:
+        fits.append(this_fit)
+        keep_x.append(x)
+        keep_y.append(y)
+        min_x = min([min_x, np.min(x)])
+        max_x = max([max_x, np.max(x)])
+
+    if fig_name is not None:
+        for i,fit in enumerate(fits):
+            for idx, this_x in enumerate(keep_x[i]):
+                n = np.sum(keep_x[i]==this_x) # How many trials, sets the
+                                               # markersize
+                ax.plot(this_x,keep_y[i][idx],
+                        'o',color = colors[i], markersize = n)
+                
+                x_for_plot = np.linspace(min_x-0.05,
+                                         max_x+0.05,100)
+
+            ax.plot(x_for_plot,cumgauss(x_for_plot,fits[i][0],
+                                        fits[i][1]),
+                    color = colors[i])
+
+            # Indicate the values of the fit:
+            ax.text(0.7,0.5,'PSE: %1.2f\nslope: %1.2f'%(fits[i][0], fits[i][1]))
+
+        fig.savefig(fig_name)

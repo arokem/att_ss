@@ -21,13 +21,11 @@ p = dict(
     ecc = 6, # dva 
     center_size = 3,
     surr_size = 8,
-    center_contrast = np.array([0.2, 0.3, 0.5, 0.7]),
-    center_comparison = np.array([-0.15, -0.1, -0.05, 0, 0.05, 0.1, 0.15]),
+    center_contrast = np.array([0.5]), #np.array([0.2, 0.3, 0.5, 0.7]),
+    center_comparison = np.array([-0.3, -0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1,
+                                  0.15, 0.2, 0.3 ]),
     surr_contrast = 1,
     div_color = -1,
-    # Staircase: 
-    start_amp = 0.05,
-    step = 0.01, 
     # Timing: 
     cue_dur = 0.5,
     cue_to_stim = 0.3,
@@ -35,3 +33,4 @@ p = dict(
     stim_to_stim = 0.4,
     iti = .2,
     )
+
