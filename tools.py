@@ -607,7 +607,7 @@ def get_data(file_name=None):
     return p,l,data_rec
 
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
-                     fitfunc='cumgauss'):
+                     fitfunc='cumgauss',boot=1000):
     """
     This analyzes data from the constant stimuli experiment
     """
@@ -621,21 +621,36 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         """
         return 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
 
-    def cumgauss_fit(params):
+    def fit_th(x, ans, ask, initial):
         """
-        fit func
+        The core of the fitting. Get x values and get the responses (between 0
+        and 1). Then, fit the function according to these values
         """
-        mu,sigma = params
-        return cumgauss(x, mu, sigma)
+        # Define the fit/error functions in the scope of the wrapper function:
+        def cumgauss_fit(params):
+            """
+            fit func
+            """
+            mu,sigma = params
+            return cumgauss(x, mu, sigma)
 
-    def err_func(params):
-        """
-        Error function
-        """
-        return y-cumgauss_fit(params)
+        def err_func(params):
+            """
+            Error function
+            """
+            return y-cumgauss_fit(params)
+        
+        # Generate the y axis:
+        y = []
+        for i in range(len(ans)):
+            y.append(np.mean(ans[ask==ask[i]]))
+
+        this_fit, msg = leastsq(err_func, initial)
+
+        return x, y, this_fit
 
     p,l,data_rec = get_data(data_file)
-
+        
     if cue_cond == 'cued':
         cue_cond_idx = np.where(data_rec['cue_side']==data_rec['ask_side'])[0]
     elif cue_cond == 'other':
@@ -658,6 +673,12 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
     fits = []
     keep_x = []
     keep_y = []
+
+    boot_th_ub = []
+    boot_sl_ub = []
+    boot_th_lb = []
+    boot_sl_lb = []
+
     min_x=1
     max_x=0
     for contrast in center_contrasts:
@@ -669,21 +690,40 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         # next line):
         this_ans = 1 - (data_rec['answer'][cue_cond_idx][c_idx] - 1) 
         x = np.array(contrast) + this_ask
-        y = []
-        for i in range(len(this_ans)):
-            y.append(np.mean(this_ans[this_ask==this_ask[i]]))
 
         # Begin by guessing that the mean is the same as the contrast shown
         # (no bias):
         initial = contrast, 1
-        this_fit, msg = leastsq(err_func, initial)
-
+        x,y,this_fit = fit_th(x,this_ans,this_ask,initial)
+        
         # Store stuff for plotting:
         fits.append(this_fit)
         keep_x.append(x)
         keep_y.append(y)
+
         min_x = min([min_x, np.min(x)])
         max_x = max([max_x, np.max(x)])
+        boot_th = []
+        boot_sl = []
+        # Bootstrap estimate the parameters
+        for b in range(boot):
+            # Choose this boot sample
+            idx = np.random.randint(0, len(x), len(x))
+            boot_x = x[idx]
+            boot_ans = this_ans[idx]
+            boot_ask = this_ask[idx]
+            # Use the same initial value guess as above:
+            this_x, this_y, boot_fit = fit_th(boot_x, boot_ans, boot_ask,initial)
+            boot_th.append(boot_fit[0])
+            boot_sl.append(boot_fit[1])
+            
+        sort_th = np.sort(boot_th)
+        sort_sl = np.sort(boot_sl)
+
+        boot_th_ub.append(sort_th[0.975*boot])
+        boot_th_lb.append(sort_th[0.025*boot])
+        boot_sl_ub.append(sort_sl[0.975*boot])
+        boot_sl_lb.append(sort_sl[0.025*boot])
 
     if fig_name is not None:
         for i,fit in enumerate(fits):
@@ -701,6 +741,10 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                     color = colors[i])
 
             # Indicate the values of the fit:
-            ax.text(0.7,0.5,'PSE: %1.2f\nslope: %1.2f'%(fits[i][0], fits[i][1]))
+            ax.text(fits[i][0] + 0.1, fits[i][0] + 0.1,
+    'PSE: %1.2f +/- %1.2f \n slope: %1.2f +/- %1.2f'%(fits[i][0],
+                                            (boot_th_ub[i]-boot_th_lb[i])/2,
+                                                      fits[i][1],
+                                            (boot_sl_ub[i]-boot_sl_lb[i])/2))
 
         fig.savefig(fig_name)
