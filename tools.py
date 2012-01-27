@@ -744,7 +744,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                                             (boot_th_ub[i]-boot_th_lb[i])/2,
                                                       fits[i][1],
                                             (boot_sl_ub[i]-boot_sl_lb[i])/2))
-            print("For the file: %s \n"%data_file+texter)
+            print("For the file: %s \n %s \n"%(data_file, cue_cond) +texter)
 
             # Indicate the values of the fit:
             ax.text(fits[i][0] + 0.1, fits[i][0] + 0.1,texter)
