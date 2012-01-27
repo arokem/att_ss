@@ -739,12 +739,14 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             ax.plot(x_for_plot,cumgauss(x_for_plot,fits[i][0],
                                         fits[i][1]),
                     color = colors[i])
-
-            # Indicate the values of the fit:
-            ax.text(fits[i][0] + 0.1, fits[i][0] + 0.1,
-    'PSE: %1.2f +/- %1.2f \n slope: %1.2f +/- %1.2f'%(fits[i][0],
+            texter = (
+                'PSE: %1.2f +/- %1.2f \nslope: %1.2f +/- %1.2f'%(fits[i][0],
                                             (boot_th_ub[i]-boot_th_lb[i])/2,
                                                       fits[i][1],
                                             (boot_sl_ub[i]-boot_sl_lb[i])/2))
+            print("For the file: %s \n"%data_file+texter)
+
+            # Indicate the values of the fit:
+            ax.text(fits[i][0] + 0.1, fits[i][0] + 0.1,texter)
 
         fig.savefig(fig_name)
