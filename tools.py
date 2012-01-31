@@ -16,7 +16,7 @@ from scipy.special import erf
 class GetFromGui(wx.Dialog):
     """ Allows user to set input parameters of ss through a simple GUI"""    
     def __init__(self, parent, id, title):
-        wx.Dialog.__init__(self, parent, id, title, size=(280,220))
+        wx.Dialog.__init__(self, parent, id, title, size=(280,240))
         # Add text label
         wx.StaticText(self, -1, 'Subject ID:', pos=(10,20))
         # Add the subj id text box:
@@ -32,11 +32,17 @@ class GetFromGui(wx.Dialog):
         # Add the text box for the surround orientation:
         self.textbox3 = wx.TextCtrl(self, -1, pos=(100, 78), size=(150, -1))
 
-        self.rb_swt = wx.RadioButton(self, -1, 'surround with target', (100, 110),
-                                  style=wx.RB_GROUP)
+        self.rb_swt = wx.RadioButton(self, -1, 'surround with target',
+                                     (100, 110),
+                                     style=wx.RB_GROUP)
+
+        self.rb_af = wx.RadioButton(self, -1, 'audio feedback',
+                                     (100, 150),
+                                     style=wx.RB_GROUP)
+
         # Add OK/Cancel buttons
-        wx.Button(self, 1, 'Done', (60, 150))
-        wx.Button(self, 2, 'Quit', (150, 150))
+        wx.Button(self, 1, 'Done', (60, 190))
+        wx.Button(self, 2, 'Quit', (150, 190))
         
         # Bind button press events to class methods for execution
         self.Bind(wx.EVT_BUTTON, self.OnDone, id=1)
@@ -66,6 +72,11 @@ class GetFromGui(wx.Dialog):
             self.swt=True
         else:
             self.swt=False
+
+        if self.rb_af.GetValue():
+            self.audio=True
+        else:
+            self.audio=False
 
         self.Close()
 
@@ -137,6 +148,7 @@ class Params(object):
                     "center_ori" : user_choice.center_ori,
                     "surr_ori" : user_choice.surr_ori,
                     "surround_w_target": user_choice.swt,
+                    "audio_feedback": user_choice.audio,
                     }
         else:
             user_choice.Destroy()

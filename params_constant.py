@@ -8,7 +8,10 @@ p = dict(
     full_screen = False,
     screen_number = 0, #1,
     refresh_rate = 60, # Hz
-   # General:
+    # Sounds:
+    correct_sound = Sound(sound_freq_sweep(2000,2000,.1)),
+    incorrect_sound = Sound(sound_freq_sweep(8000, 200, .1)),
+    # General:
     n_trials = 250,
     break_trials = 50,
     fixation_size = 0.25,

@@ -277,13 +277,15 @@ if __name__ == "__main__":
                     core.quit()
                 elif key in ['1','2']:
                     if key in correct_ans:
-                        p.correct_sound.play()
+                        if p.audio_feedback:
+                            p.correct_sound.play()
                         correct = 1
                         response = True
                         # RT from the onset of the second stimulus:
                         rt = stim_clock.getTime()
                     else:
-                        p.incorrect_sound.play()
+                        if p.audio_feedback:
+                            p.incorrect_sound.play()
                         correct = 0
                         response = True
                         # RT from the onset of the second stimulus:

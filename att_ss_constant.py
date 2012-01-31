@@ -268,7 +268,16 @@ if __name__ == "__main__":
         for this in fix: this.draw()
         win.flip()
 
-        # Get a responsee:
+        if ask_contrast>0:
+            correct_ans = '2'
+        elif ask_contrast<0:
+            correct_ans = '1'
+        # If this is a 0 difference trial, choose a random correct answer from
+        # the two options: 
+        else:
+            correct_ans = ['1','2'][np.random.randint(2)]
+
+        # Get a response:
         response = False
         while not response:
             for key in event.getKeys():
@@ -280,7 +289,12 @@ if __name__ == "__main__":
                         response = True
                         # RT from the onset of the second stimulus:
                         rt = stim_clock.getTime()
-                            
+                        if p.audio_feedback:
+                            if key==correct_ans:
+                                p.correct_sound.play()
+                            else:
+                                p.incorrect_sound.play()
+                                
         core.wait(p.iti)
         event.clearEvents()  # keep the event buffer from overflowing
         
