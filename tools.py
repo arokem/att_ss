@@ -32,13 +32,11 @@ class GetFromGui(wx.Dialog):
         # Add the text box for the surround orientation:
         self.textbox3 = wx.TextCtrl(self, -1, pos=(100, 78), size=(150, -1))
 
-        self.rb_swt = wx.RadioButton(self, -1, 'surround with target',
-                                     (100, 110),
-                                     style=wx.RB_GROUP)
+        wx.StaticText(self, -1, "Surround with target", pos=(10,110))
+        self.textbox4 = wx.TextCtrl(self, -1, pos=(150, 108), size=(100, -1))
 
-        self.rb_af = wx.RadioButton(self, -1, 'audio feedback',
-                                     (100, 150),
-                                     style=wx.RB_GROUP)
+        wx.StaticText(self, -1, "Audio feedback", pos=(10,140))
+        self.textbox5 = wx.TextCtrl(self, -1, pos=(150, 138), size=(100, -1))
 
         # Add OK/Cancel buttons
         wx.Button(self, 1, 'Done', (60, 190))
@@ -57,6 +55,8 @@ class GetFromGui(wx.Dialog):
         self.subject = self.textbox1.GetValue()
         center_ori = self.textbox2.GetValue()
         surr_ori = self.textbox3.GetValue()
+        swt = self.textbox4.GetValue()
+        audio = self.textbox3.GetValue()
         
         if center_ori:
             self.center_ori = center_ori
@@ -68,15 +68,15 @@ class GetFromGui(wx.Dialog):
         else:
             self.surr_ori = 0
 
-        if self.rb_swt.GetValue():
-            self.swt=True
+        if swt:
+            self.swt = True
         else:
-            self.swt=False
+            self.swt = False
 
-        if self.rb_af.GetValue():
-            self.audio=True
+        if surr_ori:
+            self.audio = True
         else:
-            self.audio=False
+            self.audio = False
 
         self.Close()
 
