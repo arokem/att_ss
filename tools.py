@@ -56,7 +56,7 @@ class GetFromGui(wx.Dialog):
         center_ori = self.textbox2.GetValue()
         surr_ori = self.textbox3.GetValue()
         swt = self.textbox4.GetValue()
-        audio = self.textbox3.GetValue()
+        audio = self.textbox5.GetValue()
         
         if center_ori:
             self.center_ori = center_ori
@@ -73,7 +73,7 @@ class GetFromGui(wx.Dialog):
         else:
             self.swt = False
 
-        if surr_ori:
+        if audio:
             self.audio = True
         else:
             self.audio = False
