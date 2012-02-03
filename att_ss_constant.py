@@ -37,11 +37,11 @@ if __name__ == "__main__":
     app.MainLoop()
     p.set_by_gui()
         
-    calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
+    # calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
                                                          # setting of where
                                                          # monitors are stored
 
-    mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
+    # mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
                                    #argument to win:
                                    
     
@@ -321,8 +321,8 @@ if __name__ == "__main__":
 
     # Per default the analysis proceeds with cumulative Gaussian as the
     # fit function:
-    analyze_constant(f.name, fig_name='data/%s_cued.png'%fig_stem,
-                     cue_cond='cued')
-    analyze_constant(f.name, fig_name='data/%s_other.png'%fig_stem,
-                     cue_cond='other')
+    # analyze_constant(f.name, fig_name='data/%s_cued.png'%fig_stem,
+    #                  cue_cond='cued')
+    # analyze_constant(f.name, fig_name='data/%s_other.png'%fig_stem,
+    #                 cue_cond='other')
      
