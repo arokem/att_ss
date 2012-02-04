@@ -321,8 +321,8 @@ if __name__ == "__main__":
 
     # Per default the analysis proceeds with cumulative Gaussian as the
     # fit function:
-    # analyze_constant(f.name, fig_name='data/%s_cued.png'%fig_stem,
-    #                  cue_cond='cued')
-    # analyze_constant(f.name, fig_name='data/%s_other.png'%fig_stem,
-    #                 cue_cond='other')
+    analyze_constant(f.name, fig_name='data/%s_cued.png'%fig_stem,
+                      cue_cond='cued')
+    analyze_constant(f.name, fig_name='data/%s_other.png'%fig_stem,
+                     cue_cond='other')
      
