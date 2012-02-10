@@ -16,7 +16,10 @@ p = dict(
     break_trials = 50,
     fixation_size = 0.25,
     rgb = np.array([1.,1.,1.]),
-    cue_reliability = 0.7,
+    # The reliability of the cue. Set to a probability or to False (for neutral
+    # cue): 
+    # cue_reliability = False, 
+    cue_reliability = 0.7, 
     # Stimuli:
     res = 128,
     temporal_freq = 4, # 0 for no flicker
@@ -24,9 +27,9 @@ p = dict(
     ecc = 6, # dva 
     center_size = 3,
     surr_size = 8,
-    center_contrast = np.array([0.5]), #np.array([0.2, 0.3, 0.5, 0.7]),
-    center_comparison = np.array([-0.3, -0.2, -0.15, -0.1, -0.05, 0, 0.05, 0.1,
-                                  0.15, 0.2, 0.3 ]),
+    center_contrast = np.array([0.3]),
+    center_comparison = np.array( [-0.29, -0.2,  -0.1,   0.,    0.1,   0.2,
+                                   0.25,  0.3,   0.35,  0.4,   0.6 ]),
     surr_contrast = 1,
     div_color = -1,
     # Timing: 

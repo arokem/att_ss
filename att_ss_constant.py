@@ -72,10 +72,12 @@ if __name__ == "__main__":
                                          size=0.5 * fs * 1.5)
 
     fix = [fixation_surround, fixation]
+
     
+    if p.cue_reliability:
     # Triangle fixation (with black penumbra), used as a cue for the
     # target-detection task:
-    cue = dict(r=dict(cue=visual.ShapeStim(win, fillColor=1*p.rgb,
+        cue = dict(r=dict(cue=visual.ShapeStim(win, fillColor=1*p.rgb,
                                            lineColor=1*p.rgb,
                                             vertices=((fs/2, 0),
                                                       (-fs/2, fs/2),
@@ -95,6 +97,33 @@ if __name__ == "__main__":
                                             vertices=((-fs/1.5, 0),
                                                       (fs/1.5, fs/1.5),
                                                       (fs/1.5, -fs/1.5)))))
+
+    else: 
+        # Show an uninformative diamond at the same time (neutral cue)
+        cue = dict(r=dict(cue=visual.PatchStim(win,
+                                               tex=None,
+                                               mask = None,
+                                               color=0.5 *p.rgb,
+                                               size= 0.5 * 2 * fs,
+                                               ori=45),
+                            surr=visual.PatchStim(win,
+                                                  tex=None,
+                                                  mask=None,
+                                                  color=-0.5*p.rgb,
+                                                  size=0.5 * 2 * fs * 1.5,
+                                                  ori=45)),
+                    l=dict(cue=visual.PatchStim(win,
+                                               tex=None,
+                                               mask = None,
+                                               color=0.5*p.rgb,
+                                               size= 0.5 * 2 * fs,
+                                               ori=45),
+                            surr=visual.PatchStim(win,
+                                                  tex=None,
+                                                  mask=None,
+                                                  color=-0.5*p.rgb,
+                                                  size=0.5 * 2 * fs  * 1.5,
+                                                  ori=45)))
     
     surround = dict(r=visual.PatchStim(win,
                                        tex='sin',
@@ -177,9 +206,10 @@ if __name__ == "__main__":
         cue_side = sides[side_idx]
         other_side = sides[np.mod(side_idx + 1, 2)]
                   
-        # Is the cue reliable this trial? 
-        cue_true = np.random.rand() < p.cue_reliability
-        
+        # Is the cue reliable this trial?  
+        cue_true = np.random.rand() < p.cue_reliability # If p.cue_reliability
+                                        # is set to "False", this always
+                                        # evaluates to False
         if cue_true:
             ask_side = cue_side
             foil_side = other_side
@@ -321,8 +351,17 @@ if __name__ == "__main__":
 
     # Per default the analysis proceeds with cumulative Gaussian as the
     # fit function:
-    analyze_constant(f.name, fig_name='data/%s_cued.png'%fig_stem,
-                      cue_cond='cued')
-    analyze_constant(f.name, fig_name='data/%s_other.png'%fig_stem,
-                     cue_cond='other')
-     
+
+    if p.cue_reliability: 
+        # There was a cued and an 'other' condition:
+        analyze_constant(f.name, fig_name='data/%s_cued.png'%fig_stem,
+                         cue_cond='cued')
+    
+        analyze_constant(f.name, fig_name='data/%s_other.png'%fig_stem,
+                         cue_cond='other')
+    else: 
+        analyze_constant(f.name, fig_name='data/%s_neutral.png'%fig_stem,
+                         cue_cond='other') # In the neutral cue condition, all
+                                        # the trials are considered to be
+                                        # 'other' trials.
+    
