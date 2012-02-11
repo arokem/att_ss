@@ -73,58 +73,42 @@ if __name__ == "__main__":
 
     fix = [fixation_surround, fixation]
 
-    
+    cue_vert = dict(r=dict(cue=((fs/2, 0),(-fs/2, fs/2),(-fs/2,-fs/2)),
+                           surr=((fs/1.5, 0),(-fs/1.5, fs/1.5),(-fs/1.5,
+                           -fs/1.5))),
+                    l=dict(cue=((-fs/2, 0),(fs/2, fs/2),(fs/2,-fs/2)),
+                           surr=((-fs/1.5, 0),(fs/1.5, fs/1.5),(fs/1.5,
+                           -fs/1.5))))
+                                   
     if p.cue_reliability:
     # Triangle fixation (with black penumbra), used as a cue for the
     # target-detection task:
         cue = dict(r=dict(cue=visual.ShapeStim(win, fillColor=1*p.rgb,
                                            lineColor=1*p.rgb,
-                                            vertices=((fs/2, 0),
-                                                      (-fs/2, fs/2),
-                                                      (-fs/2,-fs/2))),
-                      surr=visual.ShapeStim(win, fillColor=-1*p.rgb,
+                                            vertices=cue_vert['r']['cue']),
+                          surr=visual.ShapeStim(win, fillColor=-1*p.rgb,
                                             lineColor=-1*p.rgb,
-                                            vertices=((fs/1.5, 0),
-                                                      (-fs/1.5, fs/1.5),
-                                                      (-fs/1.5, -fs/1.5)))),
-               l=dict(cue=visual.ShapeStim(win, fillColor=1*p.rgb,
+                                            vertices=cue_vert['r']['surr'])),
+                   l=dict(cue=visual.ShapeStim(win, fillColor=1*p.rgb,
                                            lineColor=1*p.rgb,
-                                           vertices=((-fs/2, 0),
-                                                     (fs/2, fs/2),
-                                                     (fs/2,-fs/2))),
+                                           vertices=cue_vert['l']['cue']),
                       surr=visual.ShapeStim(win, fillColor=-1*p.rgb,
                                             lineColor=-1*p.rgb,
-                                            vertices=((-fs/1.5, 0),
-                                                      (fs/1.5, fs/1.5),
-                                                      (fs/1.5, -fs/1.5)))))
+                                            vertices=cue_vert['l']['surr'])))
 
-    else: 
+    else:
+        c = ((-fs/2,0),(0, fs/2), (fs/2, 0),(0,-fs/2))
+        s = ((-fs/1.5,0),(0, fs/1.5),(fs/1.5, 0),(0,-fs/1.5))
+        neutral_cue = visual.ShapeStim(win, fillColor=1*p.rgb,
+                                       lineColor=1*p.rgb,
+                                        vertices=c)
+        neutral_surr = visual.ShapeStim(win, fillColor=-1*p.rgb,
+                                        lineColor=-1*p.rgb,
+                                    vertices=s)
         # Show an uninformative diamond at the same time (neutral cue)
-        cue = dict(r=dict(cue=visual.PatchStim(win,
-                                               tex=None,
-                                               mask = None,
-                                               color=0.5 *p.rgb,
-                                               size= 0.5 * 2 * fs,
-                                               ori=45),
-                            surr=visual.PatchStim(win,
-                                                  tex=None,
-                                                  mask=None,
-                                                  color=-0.5*p.rgb,
-                                                  size=0.5 * 2 * fs * 1.5,
-                                                  ori=45)),
-                    l=dict(cue=visual.PatchStim(win,
-                                               tex=None,
-                                               mask = None,
-                                               color=0.5*p.rgb,
-                                               size= 0.5 * 2 * fs,
-                                               ori=45),
-                            surr=visual.PatchStim(win,
-                                                  tex=None,
-                                                  mask=None,
-                                                  color=-0.5*p.rgb,
-                                                  size=0.5 * 2 * fs  * 1.5,
-                                                  ori=45)))
-    
+        cue = dict(r=dict(cue=neutral_cue,surr=neutral_surr),
+                   l=dict(cue=neutral_cue,surr=neutral_surr))
+        
     surround = dict(r=visual.PatchStim(win,
                                        tex='sin',
                                        mask='circle',
@@ -298,10 +282,11 @@ if __name__ == "__main__":
         for this in fix: this.draw()
         win.flip()
 
-        if ask_contrast>0:
-            correct_ans = '2'
-        elif ask_contrast<0:
+        if contrasts[ask_side][0]>contrasts[ask_side][1]:
             correct_ans = '1'
+        elif contrasts[ask_side][0]<contrasts[ask_side][1]:
+            correct_ans = '2'
+
         # If this is a 0 difference trial, choose a random correct answer from
         # the two options: 
         else:
