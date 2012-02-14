@@ -16,7 +16,7 @@ from scipy.special import erf
 class GetFromGui(wx.Dialog):
     """ Allows user to set input parameters of ss through a simple GUI"""    
     def __init__(self, parent, id, title):
-        wx.Dialog.__init__(self, parent, id, title, size=(280,240))
+        wx.Dialog.__init__(self, parent, id, title, size=(280,280))
         # Add text label
         wx.StaticText(self, -1, 'Subject ID:', pos=(10,20))
         # Add the subj id text box:
@@ -39,11 +39,11 @@ class GetFromGui(wx.Dialog):
         self.textbox5 = wx.TextCtrl(self, -1, pos=(150, 138), size=(100, -1))
 
         wx.StaticText(self, -1, "Neutral Cue?", pos=(10,170))
-        self.textbox6 = wx.TextCtrl(self, -1, pos=(150, 158), size=(100, -1))
+        self.textbox6 = wx.TextCtrl(self, -1, pos=(150, 168), size=(100, -1))
 
         # Add OK/Cancel buttons
-        wx.Button(self, 1, 'Done', (60, 190))
-        wx.Button(self, 2, 'Quit', (150, 190))
+        wx.Button(self, 1, 'Done', (60, 210))
+        wx.Button(self, 2, 'Quit', (150, 210))
         
         # Bind button press events to class methods for execution
         self.Bind(wx.EVT_BUTTON, self.OnDone, id=1)

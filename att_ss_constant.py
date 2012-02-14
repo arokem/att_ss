@@ -36,6 +36,20 @@ if __name__ == "__main__":
     app = wx.App()
     app.MainLoop()
     p.set_by_gui()
+    # Different number of trials for different cue reliability conditions:
+
+    # If this is a predictive cue, do 250 trials, with breaks every 50:
+    if p.cue_reliability:
+        n_trials = 250
+        break_trials = 50
+
+    # If this is a neutral cue, do 75 trials, with no break:
+    else:
+        n_trials = 75
+        break_trials = 76 # To be on the safe side.
+    
+
+
         
     # calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
                                                          # setting of where
@@ -176,15 +190,15 @@ if __name__ == "__main__":
     conds = np.array(conds)
     n_conds = conds.shape[0]
     
-    cond_randomizer = np.mod(np.random.permutation(p.n_trials), n_conds)
+    cond_randomizer = np.mod(np.random.permutation(n_trials), n_conds)
     center_contrast1 = conds[cond_randomizer][:,0]
     center_comparison1 = conds[cond_randomizer][:,1]
     # Randomize again the for the foil side:
-    cond_randomizer = np.mod(np.random.permutation(p.n_trials), n_conds)
+    cond_randomizer = np.mod(np.random.permutation(n_trials), n_conds)
     center_contrast2 = conds[cond_randomizer][:, 0]
     center_comparison2 = conds[cond_randomizer][:,1]
     
-    for trial in xrange(p.n_trials):
+    for trial in xrange(n_trials):
         # Randomly choose a side for the cue:
         side_idx = np.random.randint(2)
         cue_side = sides[side_idx]
@@ -327,7 +341,7 @@ if __name__ == "__main__":
                       rt)
 
         # Is it time for a break?
-        if trial>0 and np.mod(trial, p.break_trials)==0:
+        if trial>0 and np.mod(trial, break_trials)==0:
             Text(win,"Take a break. \n Press any key to continue")()
 
     win.close()
