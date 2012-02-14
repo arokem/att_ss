@@ -16,8 +16,11 @@ p = dict(
     rgb = np.array([1.,1.,1.]),
     # The reliability of the cue. Set to a probability or to False (for neutral
     # cue): 
-    cue_reliability = False, 
+    #trying to change this to a input parameter
+    #cue_reliability = False, 
     # cue_reliability = 0.7, 
+    
+    
     # Stimuli:
     res = 128,
     temporal_freq = 4, # 0 for no flicker

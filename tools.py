@@ -38,6 +38,9 @@ class GetFromGui(wx.Dialog):
         wx.StaticText(self, -1, "Audio feedback", pos=(10,140))
         self.textbox5 = wx.TextCtrl(self, -1, pos=(150, 138), size=(100, -1))
 
+        wx.StaticText(self, -1, "Neutral Cue?", pos=(10,170))
+        self.textbox6 = wx.TextCtrl(self, -1, pos=(150, 158), size=(100, -1))
+
         # Add OK/Cancel buttons
         wx.Button(self, 1, 'Done', (60, 190))
         wx.Button(self, 2, 'Quit', (150, 190))
@@ -57,11 +60,12 @@ class GetFromGui(wx.Dialog):
         surr_ori = self.textbox3.GetValue()
         swt = self.textbox4.GetValue()
         audio = self.textbox5.GetValue()
-        
+        cue_reliability = self.textbox6.GetValue()
+ 
         if center_ori:
-            self.center_ori = center_ori
+              self.center_ori = center_ori
         else:
-            self.center_ori = 0
+              self.center_ori = 0
 
         if surr_ori:
             self.surr_ori = surr_ori
@@ -77,6 +81,11 @@ class GetFromGui(wx.Dialog):
             self.audio = True
         else:
             self.audio = False
+
+        if cue_reliability:
+            self.cue_reliability = False
+        else:
+            self.cue_reliability = 0.7
 
         self.Close()
 
@@ -149,6 +158,7 @@ class Params(object):
                     "surr_ori" : user_choice.surr_ori,
                     "surround_w_target": user_choice.swt,
                     "audio_feedback": user_choice.audio,
+                    "cue_reliability":user_choice.cue_reliability,
                     }
         else:
             user_choice.Destroy()
