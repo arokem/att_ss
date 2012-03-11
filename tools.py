@@ -2,10 +2,19 @@ import os
 import time
 
 import numpy as np
-import wx
+try:
+    import wx
+    has_wx = True
+except:
+    has_wx = False
+    pass
 
-from psychopy import core, visual, event, gui
-
+try:
+    from psychopy import core, visual, event, gui
+    has_psychopy = True
+except:
+    has_psychopy = False
+    
 import matplotlib
 from matplotlib.mlab import window_hanning,csv2rec
 import matplotlib.pyplot as plt
@@ -13,86 +22,87 @@ from scipy.optimize import leastsq
 from scipy.special import erf
 
 #User input GUI:
-class GetFromGui(wx.Dialog):
-    """ Allows user to set input parameters of ss through a simple GUI"""    
-    def __init__(self, parent, id, title):
-        wx.Dialog.__init__(self, parent, id, title, size=(280,280))
-        # Add text label
-        wx.StaticText(self, -1, 'Subject ID:', pos=(10,20))
-        # Add the subj id text box:
-        self.textbox1 = wx.TextCtrl(self, -1, pos=(100, 18), size=(150, -1))
+if has_wx:
+    class GetFromGui(wx.Dialog):
+        """ Allows user to set input parameters of ss through a simple GUI"""    
+        def __init__(self, parent, id, title):
+            wx.Dialog.__init__(self, parent, id, title, size=(280,280))
+            # Add text label
+            wx.StaticText(self, -1, 'Subject ID:', pos=(10,20))
+            # Add the subj id text box:
+            self.textbox1 = wx.TextCtrl(self, -1, pos=(100, 18), size=(150, -1))
 
-        # Add text label
-        wx.StaticText(self, -1, 'Center ori:', pos=(10, 50))
-        # Add the text box for the center orientation:
-        self.textbox2 = wx.TextCtrl(self, -1, pos=(100, 48), size=(150, -1))
+            # Add text label
+            wx.StaticText(self, -1, 'Center ori:', pos=(10, 50))
+            # Add the text box for the center orientation:
+            self.textbox2 = wx.TextCtrl(self, -1, pos=(100, 48), size=(150, -1))
 
-        # Add text label
-        wx.StaticText(self, -1, 'Surr ori:', pos=(10, 80))
-        # Add the text box for the surround orientation:
-        self.textbox3 = wx.TextCtrl(self, -1, pos=(100, 78), size=(150, -1))
+            # Add text label
+            wx.StaticText(self, -1, 'Surr ori:', pos=(10, 80))
+            # Add the text box for the surround orientation:
+            self.textbox3 = wx.TextCtrl(self, -1, pos=(100, 78), size=(150, -1))
 
-        wx.StaticText(self, -1, "Surround with target", pos=(10,110))
-        self.textbox4 = wx.TextCtrl(self, -1, pos=(150, 108), size=(100, -1))
+            wx.StaticText(self, -1, "Surround with target", pos=(10,110))
+            self.textbox4 = wx.TextCtrl(self, -1, pos=(150, 108), size=(100, -1))
 
-        wx.StaticText(self, -1, "Audio feedback", pos=(10,140))
-        self.textbox5 = wx.TextCtrl(self, -1, pos=(150, 138), size=(100, -1))
+            wx.StaticText(self, -1, "Audio feedback", pos=(10,140))
+            self.textbox5 = wx.TextCtrl(self, -1, pos=(150, 138), size=(100, -1))
 
-        wx.StaticText(self, -1, "Neutral Cue?", pos=(10,170))
-        self.textbox6 = wx.TextCtrl(self, -1, pos=(150, 168), size=(100, -1))
+            wx.StaticText(self, -1, "Neutral Cue?", pos=(10,170))
+            self.textbox6 = wx.TextCtrl(self, -1, pos=(150, 168), size=(100, -1))
 
-        # Add OK/Cancel buttons
-        wx.Button(self, 1, 'Done', (60, 210))
-        wx.Button(self, 2, 'Quit', (150, 210))
-        
-        # Bind button press events to class methods for execution
-        self.Bind(wx.EVT_BUTTON, self.OnDone, id=1)
-        self.Bind(wx.EVT_BUTTON, self.OnClose, id=2)
-        self.Centre()
-        self.ShowModal()        
+            # Add OK/Cancel buttons
+            wx.Button(self, 1, 'Done', (60, 210))
+            wx.Button(self, 2, 'Quit', (150, 210))
 
-    # If "Done" is pressed, set important values and close the window
-    def OnDone(self,event):
+            # Bind button press events to class methods for execution
+            self.Bind(wx.EVT_BUTTON, self.OnDone, id=1)
+            self.Bind(wx.EVT_BUTTON, self.OnClose, id=2)
+            self.Centre()
+            self.ShowModal()        
 
-        self.success = True
-        self.subject = self.textbox1.GetValue()
-        center_ori = self.textbox2.GetValue()
-        surr_ori = self.textbox3.GetValue()
-        swt = self.textbox4.GetValue()
-        audio = self.textbox5.GetValue()
-        cue_reliability = self.textbox6.GetValue()
- 
-        if center_ori:
-              self.center_ori = center_ori
-        else:
-              self.center_ori = 0
+        # If "Done" is pressed, set important values and close the window
+        def OnDone(self,event):
 
-        if surr_ori:
-            self.surr_ori = surr_ori
-        else:
-            self.surr_ori = 0
+            self.success = True
+            self.subject = self.textbox1.GetValue()
+            center_ori = self.textbox2.GetValue()
+            surr_ori = self.textbox3.GetValue()
+            swt = self.textbox4.GetValue()
+            audio = self.textbox5.GetValue()
+            cue_reliability = self.textbox6.GetValue()
 
-        if swt:
-            self.swt = True
-        else:
-            self.swt = False
+            if center_ori:
+                  self.center_ori = center_ori
+            else:
+                  self.center_ori = 0
 
-        if audio:
-            self.audio = True
-        else:
-            self.audio = False
+            if surr_ori:
+                self.surr_ori = surr_ori
+            else:
+                self.surr_ori = 0
 
-        if cue_reliability:
-            self.cue_reliability = False
-        else:
-            self.cue_reliability = 0.7
+            if swt:
+                self.swt = True
+            else:
+                self.swt = False
 
-        self.Close()
+            if audio:
+                self.audio = True
+            else:
+                self.audio = False
 
-    # If "Quit" is pressed" , toggle failure and close the window
-    def OnClose(self, event):
-        self.success = False
-        self.Close()
+            if cue_reliability:
+                self.cue_reliability = False
+            else:
+                self.cue_reliability = 0.7
+
+            self.Close()
+
+        # If "Quit" is pressed" , toggle failure and close the window
+        def OnClose(self, event):
+            self.success = False
+            self.Close()
 
 
 class Params(object):
@@ -772,3 +782,18 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             ax.text(fits[i][0] + 0.1, fits[i][0] + 0.1,texter)
 
         fig.savefig(fig_name)
+
+    out = dict(x=[], y=[], trials=[],
+               fit=[],
+               boot_th_lb=boot_th_lb, boot_th_ub=boot_th_ub,
+               boot_sl_lb=boot_sl_lb, boot_sl_ub=boot_sl_ub)
+
+    # Make the return values:
+    for i, fit in enumerate(fits):
+        out['fit'].append(dict(th=fit[0], sl=fit[1]))
+        for idx, this_x in enumerate(np.unique(keep_x[i])):
+            x_idx = np.where(keep_x[i]==this_x)[0]
+            out['x'].append(x[x_idx[0]])
+            out['y'].append(y[x_idx[0]])
+            out['trials'].append(np.sum(keep_x[i]==this_x))
+    return out
