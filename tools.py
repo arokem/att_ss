@@ -630,7 +630,7 @@ def get_data(file_name=None):
         except:
             p[l[2:l.find(':')-1]]=l[l.find(':')+1:l.find('\n')]
         l = file_read.readline()
-
+        
     try:
         data_rec = csv2rec(file_name)
     except ValueError:
