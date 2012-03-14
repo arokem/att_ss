@@ -8,13 +8,13 @@ attention and surround suppression
 import numpy as np
 import tools
 reload(tools)
-from tools import analyze_constant, get_data
+from analyze_constant import run_analysis
 
 if __name__=="__main__":
     sides = ['l', 'r']
-    suppression = 0
+    suppression = 0.2
     cue_reliability = 0.7
-    std1 = 0.1
+    std1 = [0.1, 0.3]
     std2 = 0.1
     answer = []
     comparison = []
@@ -36,7 +36,7 @@ if __name__=="__main__":
     
 
     # Run an integer multiple of the center_comparison conditions trials:
-    for trial in range(15 * len(center_comparison)):
+    for trial in range(20 * len(center_comparison)):
         f.write('%s,'%trial)
     
         side_idx = np.random.randint(0,2)
@@ -44,10 +44,10 @@ if __name__=="__main__":
         f.write('%s,'%cue_side)
         if np.random.rand() < cue_reliability:
             ask_side = cue_side
-            std1 = 0.1
+            std_atten = std1[0]
         else:
             ask_side = sides[np.mod(side_idx + 1, 2)]
-            std1 = 0.3
+            std_atten = std1[1]
             
         f.write('%s,'%ask_side)
         
@@ -65,7 +65,7 @@ if __name__=="__main__":
         comparison.append(center_contrast + this_comparison)
         # Get stimuli from an actual experiment:
         percept1 = (center_contrast + this_comparison - suppression +
-                    np.random.randn() * std1)
+                    np.random.randn() * std_atten)
         percept2 = center_contrast + np.random.randn() * std2 
 
     
@@ -78,6 +78,5 @@ if __name__=="__main__":
         f.write('%s,'%this_comparison)
         f.write('\n')
     f.close()    
-    answer = np.array(answer).squeeze()
-    comparison = np.array(comparison).squeeze()
-
+    run_analysis(['model_results.csv'])
+    
