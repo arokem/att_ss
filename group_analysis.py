@@ -25,6 +25,7 @@ from scipy.special import erf
 import pandas
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from rpy2.robjects import r as rstats
 
 rc('lines', linewidth=2)
 rc('font', size=14)
@@ -49,36 +50,105 @@ dirlist = os.listdir(path_to_files)
 
 cue_conds = ['cued', 'other', 'neutral']
 
-n_subjects = 9
-sub_id = ['S%02d'%(i+1) for i in range(n_subjects)]  
+n_subjects = 10
+sub_id = ['S%02d'%(i+1) for i in range(n_subjects)]
+
+# Excluding S08:
+sub_id = sub_id[:7] + sub_id[8:]
+
+file_out_R = file('/Users/arokem/Dropbox/att_ss/file4R.csv', 'w')
+file_out_R.write('subject,abs_ori,rel_ori,cue,th,sl \n')
+
 df = {}
 for this_sub in sub_id:
+    print("Analyzing %s"%this_sub)
     df[this_sub] = {(0,0):{}, (0,90):{}, (90,0):{}, (90,90):{}}
     for this_file in dirlist:
         # Only look at files from this subject:
         if this_file.startswith(this_sub):
+            print("File: %s"%this_file)
             p,l,d = get_data(path_to_files + this_file)
             # The key differs, depending on the 
             if p.has_key('cue_reliability'):
                 cue_reliability = p['cue_reliability']
             else:
                 cue_reliability = p[' cue_reliability']
-
             if isinstance(cue_reliability, float):
                 conds = cue_conds[:2]
                 for cue in conds:
-                    df[this_sub][p[' center_ori'],p[' surr_ori']][cue] =\
-                        analyze_constant(path_to_files + this_file,
-                                         cue_cond=cue)
+                    print("Condition: %s"%cue)
+                    this = analyze_constant(path_to_files + this_file,
+                                            cue_cond=cue)
+                    df[this_sub][p[' center_ori'],p[' surr_ori']][cue] = this
+                    file_out_R.write('%s,%s,%s,%s,%s,%s\n'%(this_sub,
+                                p[' center_ori'],
+                                np.abs(p[' center_ori'] - p[' surr_ori']),
+                                cue,
+                                this['fit'][0]['th'],
+                                this['fit'][0]['sl']))
+                        
 
             else:
+                print("Condition: neutral")
                 # The neutral condition takes "other as input"
-                df[this_sub][p[' center_ori'],p[' surr_ori']]['neutral']=\
-                    analyze_constant(path_to_files + this_file,
-                                     cue_cond='other')
+                this = analyze_constant(path_to_files + this_file,
+                                     cue_cond='other') 
+                df[this_sub][p[' center_ori'],p[' surr_ori']]['neutral'] = this
+                file_out_R.write('%s,%s,%s,neutral,%s,%s\n'%(this_sub,
+                                    p[' center_ori'],
+                                    np.abs(p[' center_ori'] - p[' surr_ori']),
+                                    this['fit'][0]['th'],
+                                    this['fit'][0]['sl']))
                 
-
+file_out_R.close()
 df = pandas.DataFrame(df)
+rstats('''
+    library(ez)
+
+    # Read the data you just made above:
+
+    data = read.table("/Users/arokem/Dropbox/att_ss/file4R.csv",
+                      sep=',',header = TRUE)
+
+    aov_th = ezANOVA(data,
+                 wid=.(subject),
+                 dv=.(th),
+                 within=.(cue, rel_ori, abs_ori),
+                 )
+
+    aov_sl = ezANOVA(data,
+                 wid=.(subject),
+                 dv=.(sl),
+                 within=.(cue, rel_ori, abs_ori),
+                 )
+           ''')
+
+print("***** ANOVA : THRESHOLDS:*******")
+print(rstats.summary(rstats.aov_th))
+
+print("***** ANOVA : SLOPES:*******")
+print(rstats.summary(rstats.aov_sl))
+
+rstats('''
+
+ #Read the data you just made above:
+ data = read.table("/Users/arokem/Dropbox/att_ss/file4R.csv",
+                                       sep=',',header = TRUE)
+
+ aov_th = aov(th ~ (cue*rel_ori*abs_ori) + Error(subject/(cue+rel_ori+abs_ori)),
+ data=data)
+
+ aov_sl = aov(sl ~ (cue*rel_ori*abs_ori) + Error(subject/(cue+rel_ori+abs_ori)), 
+ data=data)
+    
+ ''')
+
+print("***** ANOVA : THRESHOLDS:*******")
+print(rstats.aov_th)
+
+print("***** ANOVA : SLOPES:*******")
+print(rstats.aov_sl)
+
 
 file_out_th = file('/Users/arokem/Dropbox/att_ss/file4SPSS_th.csv', 'w')
 file_out_sl = file('/Users/arokem/Dropbox/att_ss/file4SPSS_sl.csv', 'w')
@@ -89,7 +159,7 @@ for file_out in [file_out_th, file_out_sl]:
                                  for i in cue_conds
                                  for j in [0,90]
                                  for k in [0,90]]) + '\n')
-                        
+
 for sub in df.columns:
     file_out_th.write('%s, '%sub +
                    ''.join(['%s, '%df[sub][i,j][cond]['fit'][0]['th']
@@ -322,8 +392,8 @@ for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
         err_y = (np.array(th_ub[oris[0]][cue_cond])-
                  np.array(th_lb[oris[1]][cue_cond])).squeeze()
 
-        err_x = sl[oris[0]][cue_cond]
-        err_y = sl[oris[1]][cue_cond]
+            #err_x = sl[oris[0]][cue_cond]
+            #err_y = sl[oris[1]][cue_cond]
         
         ax.errorbar(plot_x, plot_y, xerr = err_x, yerr=err_y,
                     linestyle='None', marker='o',color=colors[cue_cond])
@@ -340,3 +410,36 @@ for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
                     
         
 fig.savefig(path_to_files + 'figures/scatter_th')
+
+fig = plt.figure()
+fig.set_size_inches([15,10])
+for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
+    for cue_idx, cue_cond in enumerate(['cued','neutral','other']):
+        ax = fig.add_subplot(2,3, (ori_idx*3) + (cue_idx+1)) 
+
+        plot_x = sl[oris[0]][cue_cond]
+        plot_y = sl[oris[1]][cue_cond]
+        err_x = (np.array(sl_ub[oris[0]][cue_cond])-
+                 np.array(sl_lb[oris[1]][cue_cond])).squeeze()
+
+        err_y = (np.array(sl_ub[oris[0]][cue_cond])-
+                 np.array(sl_lb[oris[1]][cue_cond])).squeeze()
+
+            #err_x = 0# sl[oris[0]][cue_cond]
+            #err_y = 0#sl[oris[1]][cue_cond]
+        
+        ax.errorbar(plot_x, plot_y, xerr = err_x, yerr=err_y,
+                    linestyle='None', marker='o',color=colors[cue_cond])
+        ax.errorbar(np.mean(plot_x), np.mean(plot_y),
+                    xerr = stats.sem(plot_x),
+                    yerr=stats.sem(plot_y), marker='o', color='k', markersize=10)
+
+        ax.plot([0,1],[0,1],'k--')
+        ax.set_xlim([0,1])
+        ax.set_ylim([0,1])
+        ax.set_title('%s, %s'%(cue_cond,oris[0][0]))
+        ax.set_ylabel('Orthogonal')
+        ax.set_xlabel('Parallel')
+                    
+        
+fig.savefig(path_to_files + 'figures/scatter_sl')

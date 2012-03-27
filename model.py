@@ -20,8 +20,8 @@ if __name__=="__main__":
     comparison = []
 
     center_contrast = np.array([0.3])
-    center_comparison = np.array( [-0.29, -0.2, -0.1, 0., 0.1, 0.2,
-                                   0.25, 0.3, 0.35, 0.4, 0.6])
+    center_comparison = np.array( [-0.29, -0.2, -0.1,  0.,  0.1, 0.2,
+                                    0.25,  0.3,  0.35, 0.4, 0.6])
 
     f = file('model_results.csv','w')
     f.write('### MODEL SIMULATION RESULTS:\n')
@@ -33,7 +33,6 @@ if __name__=="__main__":
     f.write('# std2 : %s\n'%std2)
     
     f.write('trial,cue_side,ask_side,r_contrast1,r_contrast2,l_contrast1,l_contrast2,answer,ask_contrast\n')
-    
 
     # Run an integer multiple of the center_comparison conditions trials:
     for trial in range(20 * len(center_comparison)):
@@ -42,6 +41,7 @@ if __name__=="__main__":
         side_idx = np.random.randint(0,2)
         cue_side = sides[side_idx]
         f.write('%s,'%cue_side)
+
         if np.random.rand() < cue_reliability:
             ask_side = cue_side
             std_atten = std1[0]

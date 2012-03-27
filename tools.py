@@ -570,8 +570,8 @@ class Staircase(object):
             this_fit,x,y = get_thresh(amp,c)
             bootstrap_th.append(this_fit[0])
 
-        upper = np.sort(bootstrap_th)[bootstrap_n*0.975]
-        lower = np.sort(bootstrap_th)[bootstrap_n*0.025]
+        upper = np.sort(bootstrap_th)[bootstrap_n*0.84]
+        lower = np.sort(bootstrap_th)[bootstrap_n*0.16]
 
         #Make a figure, if required:
         if fig_name is not None: 
@@ -752,10 +752,10 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         sort_th = np.sort(boot_th)
         sort_sl = np.sort(boot_sl)
 
-        boot_th_ub.append(sort_th[0.975*boot])
-        boot_th_lb.append(sort_th[0.025*boot])
-        boot_sl_ub.append(sort_sl[0.975*boot])
-        boot_sl_lb.append(sort_sl[0.025*boot])
+        boot_th_ub.append(sort_th[0.84*boot])
+        boot_th_lb.append(sort_th[0.16*boot])
+        boot_sl_ub.append(sort_sl[0.84*boot])
+        boot_sl_lb.append(sort_sl[0.16*boot])
 
     if fig_name is not None:
         for i,fit in enumerate(fits):
