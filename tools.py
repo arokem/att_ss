@@ -639,7 +639,7 @@ def get_data(file_name=None):
     return p,l,data_rec
 
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
-                     fitfunc='cumgauss',boot=1000):
+                     fit_func='cumgauss', log_scale=False, boot=1000):
     """
     This analyzes data from the constant stimuli experiment
     """
@@ -653,6 +653,15 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         """
         return 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
 
+    def weibull(x,threshx,slope,guess,flake,threshy=None):
+        if threshy is None:
+            threshy = 1-(1-guess)*np.exp(-1)
+            
+            k = (-np.log( (1-threshy)/(1-guess) ))**(1/slope)
+            weib = flake - (flake-guess)*np.exp(-(k*x/threshx)**slope)
+            return weib 
+
+    
     def fit_th(x, ans, ask, initial):
         """
         The core of the fitting. Get x values and get the responses (between 0
@@ -666,12 +675,19 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             mu,sigma = params
             return cumgauss(x, mu, sigma)
 
+        def weib_fit(params):
+            thresh, slope, guess, flake = params
+            return weibull(x, thresh, slope, guess, flake)
+
         def err_func(params):
             """
             Error function
             """
-            return y-cumgauss_fit(params)
-        
+            if fit_func=='cumgauss':
+                return y - cumgauss_fit(params)
+            elif fit_func=='weib':
+                return y - weib_fit(params)
+
         # Generate the y axis:
         y = []
         for i in range(len(ans)):
@@ -682,7 +698,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         return x, y, this_fit
 
     p,l,data_rec = get_data(data_file)
-        
+
     if cue_cond == 'cued':
         cue_cond_idx = np.where(data_rec['cue_side']==data_rec['ask_side'])[0]
     elif cue_cond == 'other':
@@ -723,9 +739,16 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         this_ans = 1 - (data_rec['answer'][cue_cond_idx][c_idx] - 1) 
         x = np.array(contrast) + this_ask
 
+        if log_scale:
+            x = np.log10(x)
+        
         # Begin by guessing that the mean is the same as the contrast shown
         # (no bias):
-        initial = contrast, 1
+        if fit_func == 'cumgauss':
+            initial = contrast, 1
+        elif fit_func == 'weib':
+            initial = contrast, 3.5, 0, 1
+            
         x,y,this_fit = fit_th(x,this_ans,this_ask,initial)
         
         # Store stuff for plotting:
@@ -768,8 +791,11 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                 x_for_plot = np.linspace(min_x-0.05,
                                          max_x+0.05,100)
 
-            ax.plot(x_for_plot,cumgauss(x_for_plot,fits[i][0],
-                                        fits[i][1]),
+            if fit_func == 'cumgauss':
+                plotter = cumgauss
+            elif fit_func == 'weib':
+                plotter = weibull
+            ax.plot(x_for_plot,plotter(x_for_plot,*fits[i]),
                     color = colors[i])
             texter = (
                 'PSE: %1.2f +/- %1.2f \nslope: %1.2f +/- %1.2f'%(fits[i][0],

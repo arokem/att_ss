@@ -235,6 +235,11 @@ if __name__ == "__main__":
         #Draw the cue, wait for the alloted time and move on:
         for this in  [cue[cue_side]['surr'], cue[cue_side]['cue']] : this.draw()
         win.flip()
+
+        # dbg:
+        win.getMovieFrame()
+        win.saveMovieFrames('/Users/arokem/projects/att_ss/figures/fig.png')
+              
         core.wait(p.cue_dur)
 
         # Draw the fixation and move on: 
@@ -278,6 +283,10 @@ if __name__ == "__main__":
                     this.draw()
                 for this in fix: this.draw()
                 win.flip()
+
+                # dbg:
+                #win.getMovieFrame()
+            #win.saveMovieFrames('/Users/arokem/projects/att_ss/figures/fig.png')
                 
             # Before going into the second interval, set the contrast for the
             # other side to be 0:

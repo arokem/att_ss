@@ -50,11 +50,16 @@ dirlist = os.listdir(path_to_files)
 
 cue_conds = ['cued', 'other', 'neutral']
 
-n_subjects = 10
+n_subjects = 17
 sub_id = ['S%02d'%(i+1) for i in range(n_subjects)]
 
-# Excluding S08:
+# Excluding S13 - that's a non-starter :
+sub_id = sub_id[:12] + sub_id[13:]
+
+# Excluding S08 - outlier:
 sub_id = sub_id[:7] + sub_id[8:]
+
+print sub_id
 
 file_out_R = file('/Users/arokem/Dropbox/att_ss/file4R.csv', 'w')
 file_out_R.write('subject,abs_ori,rel_ori,cue,th,sl \n')
@@ -78,7 +83,7 @@ for this_sub in sub_id:
                 for cue in conds:
                     print("Condition: %s"%cue)
                     this = analyze_constant(path_to_files + this_file,
-                                            cue_cond=cue)
+                                            cue_cond=cue, log_scale=True)
                     df[this_sub][p[' center_ori'],p[' surr_ori']][cue] = this
                     file_out_R.write('%s,%s,%s,%s,%s,%s\n'%(this_sub,
                                 p[' center_ori'],
@@ -92,7 +97,7 @@ for this_sub in sub_id:
                 print("Condition: neutral")
                 # The neutral condition takes "other as input"
                 this = analyze_constant(path_to_files + this_file,
-                                     cue_cond='other') 
+                                        cue_cond='other', log_scale=True) 
                 df[this_sub][p[' center_ori'],p[' surr_ori']]['neutral'] = this
                 file_out_R.write('%s,%s,%s,neutral,%s,%s\n'%(this_sub,
                                     p[' center_ori'],
@@ -102,7 +107,8 @@ for this_sub in sub_id:
                 
 file_out_R.close()
 df = pandas.DataFrame(df)
-rstats('''
+rstats(
+'''
     library(ez)
 
     # Read the data you just made above:
@@ -121,33 +127,42 @@ rstats('''
                  dv=.(sl),
                  within=.(cue, rel_ori, abs_ori),
                  )
-           ''')
-
-print("***** ANOVA : THRESHOLDS:*******")
-print(rstats.summary(rstats.aov_th))
-
-print("***** ANOVA : SLOPES:*******")
-print(rstats.summary(rstats.aov_sl))
-
-rstats('''
-
- #Read the data you just made above:
- data = read.table("/Users/arokem/Dropbox/att_ss/file4R.csv",
-                                       sep=',',header = TRUE)
-
- aov_th = aov(th ~ (cue*rel_ori*abs_ori) + Error(subject/(cue+rel_ori+abs_ori)),
- data=data)
-
- aov_sl = aov(sl ~ (cue*rel_ori*abs_ori) + Error(subject/(cue+rel_ori+abs_ori)), 
- data=data)
-    
- ''')
+           '''
+)
 
 print("***** ANOVA : THRESHOLDS:*******")
 print(rstats.aov_th)
 
 print("***** ANOVA : SLOPES:*******")
 print(rstats.aov_sl)
+
+
+## rstats('''
+
+##  #Read the data you just made above:
+##  data = read.table("/Users/arokem/Dropbox/att_ss/file4R.csv",
+##                                        sep=',',header = TRUE)
+
+##  aov_th = aov(th ~ (cue*rel_ori*abs_ori) + Error(subject/(cue+rel_ori+abs_ori)),
+##  data=data)
+
+##  aov_sl = aov(sl ~ (cue*rel_ori*abs_ori) + Error(subject/(cue+rel_ori+abs_ori)), 
+##  data=data)
+
+## attach(data)
+##  y = cbind(th, sl)
+##  maov = manova(y ~ (cue*rel_ori*abs_ori) + Error(subject/(cue+rel_ori+abs_ori)))
+
+##  ''')
+## print("***** ANOVA : THRESHOLDS:*******")
+## print(rstats.summary(rstats.aov_th))
+
+## print("***** ANOVA : SLOPES:*******")
+## print(rstats.summary(rstats.aov_sl))
+
+## print("***** MANOVA :*******")
+## print(rstats.summary(rstats.maov))
+
 
 
 file_out_th = file('/Users/arokem/Dropbox/att_ss/file4SPSS_th.csv', 'w')
@@ -203,6 +218,7 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
     ax = fig.add_subplot(2,2,ori_idx)
     ax_bar_th = fig_bar_th.add_subplot(2,2,ori_idx)
     ax_bar_sl = fig_bar_sl.add_subplot(2,2,ori_idx)
+    ax_bar_sl.set_ylim([0.1,0.8])
     ax.set_title('Center: %s, Surround: %s' %(ori[0] ,ori[1]))
     ax_bar_th.set_title('Center: %s, Surround: %s' %(ori[0] ,ori[1]))
     ax_bar_sl.set_title('Center: %s, Surround: %s' %(ori[0] ,ori[1]))
@@ -216,21 +232,37 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
                     marker='o',
             color=colors[cue_cond])
         
-        x_for_plot = np.linspace(0,1,100)
+        x_for_plot = np.linspace(-2, 0, 100)
 
         psycho = cumgauss(x_for_plot,
                           np.mean(th[cue_cond],0),
                           np.mean(sl[cue_cond],0))
 
-        psycho_lower = cumgauss(x_for_plot, np.mean(th[cue_cond]) -
-                                            stats.sem(th[cue_cond]),
-                                            np.mean(sl[cue_cond]) +
-                                            stats.sem(sl[cue_cond]))
+	psycho_lower = []
+	psycho_upper = []
+	for this_x_for_plot in x_for_plot:
+		psycho_lower.append(np.min([cumgauss(this_x_for_plot,
+						    np.mean(th[cue_cond]) -
+						    stats.sem(th[cue_cond]),
+						    np.mean(sl[cue_cond]) +
+			                            stats.sem(sl[cue_cond])),
+					     cumgauss(this_x_for_plot,
+						      np.mean(th[cue_cond]) +
+						      stats.sem(th[cue_cond]),
+						      np.mean(sl[cue_cond]) -
+						     stats.sem(sl[cue_cond]))]))
 
-        psycho_upper = cumgauss(x_for_plot, np.mean(th[cue_cond]) +
-                                            stats.sem(th[cue_cond]),
-                                            np.mean(sl[cue_cond]) -
-                                            stats.sem(sl[cue_cond]))
+		psycho_upper.append(np.max([cumgauss(this_x_for_plot,
+						    np.mean(th[cue_cond]) -
+						    stats.sem(th[cue_cond]),
+						    np.mean(sl[cue_cond]) +
+			                            stats.sem(sl[cue_cond])),
+					     cumgauss(this_x_for_plot,
+						      np.mean(th[cue_cond]) +
+						      stats.sem(th[cue_cond]),
+						      np.mean(sl[cue_cond]) -
+						     stats.sem(sl[cue_cond]))]))
+
     
         ax.plot(x_for_plot, psycho, color=colors[cue_cond])
         ax.set_xlabel('Comparison contrast (%)')
@@ -244,6 +276,7 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
         
         ax.fill_between(x_for_plot, psycho_lower, psycho_upper,
                         color=colors[cue_cond], alpha=0.2)
+	ax.plot([0.3,0.3], [0,100], 'k--')
         
         ax.errorbar(np.mean(th[cue_cond]),
                     0.5,
@@ -268,9 +301,9 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
                         yerr=stats.sem(sl[cue_cond],0),
                         color='k')
 
-fig.savefig(path_to_files + 'figures/psycho_curves.png')
-fig_bar_th.savefig(path_to_files + 'figures/thresholds.png')
-fig_bar_sl.savefig(path_to_files + 'figures/slopes.png')
+fig.savefig(path_to_files + 'figures/psycho_curves_wo8_log10.png')
+fig_bar_th.savefig(path_to_files + 'figures/thresholds_wo8_log10.png')
+fig_bar_sl.savefig(path_to_files + 'figures/slopes_wo8_log10.png')
 
 
 x = {(0,0):dict(cued=[], other=[], neutral=[]),
@@ -374,7 +407,7 @@ for this,fig_name in zip([th, sl],['threshold', 'slope']):
                          '0/uncued'])
     ax.set_ylabel('%s(para) - %s(ortho)/%s(para) + %s(ortho)'%(
         fig_name,fig_name,fig_name,fig_name))
-    fig.savefig(path_to_files + 'figures/%s_ss.png'%fig_name)
+    fig.savefig(path_to_files + 'figures/%s_ss_wo8_log10.png'%fig_name)
 
 
 
@@ -409,7 +442,7 @@ for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
         ax.set_xlabel('Parallel')
                     
         
-fig.savefig(path_to_files + 'figures/scatter_th')
+fig.savefig(path_to_files + 'figures/scatter_th_wo8_log10.png')
 
 fig = plt.figure()
 fig.set_size_inches([15,10])
@@ -442,4 +475,4 @@ for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
         ax.set_xlabel('Parallel')
                     
         
-fig.savefig(path_to_files + 'figures/scatter_sl')
+fig.savefig(path_to_files + 'figures/scatter_sl_wo8_log10.png')
