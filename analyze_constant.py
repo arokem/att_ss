@@ -8,6 +8,10 @@ from tools import *
 
 def run_analysis(file_name):
 
+    ############################
+    fit_func = 'cumgauss_w_asym'
+    ############################
+    
     cue_conds = ['cued', 'other']
     if len(file_name)>1: 
         for f in file_name:
@@ -22,11 +26,11 @@ def run_analysis(file_name):
                 for cue in cue_conds:
                     analyze_constant(f, fig_name=fig_name + '_%s'%cue,
                                     cue_cond=cue,
-                fit_func='weib')
+                fit_func=fit_func)
             else:
                 analyze_constant(f, fig_name=fig_name + '_neutral',
                                 cue_cond='other',
-                fit_func='weib')
+                fit_func=fit_func)
                 
     else:
         fig_name = file_name[0].split('/')[-1].split('.')[0]
@@ -40,12 +44,12 @@ def run_analysis(file_name):
             for cue in cue_conds:
                 analyze_constant(file_name[0], fig_name=fig_name + '_%s'%cue,
                                 cue_cond=cue,
-                    fit_func='weib')
+                    fit_func=fit_func)
         else:
             print fig_name
             analyze_constant(file_name[0], fig_name= fig_name + '_neutral',
                             cue_cond='other',
-                fit_func='weib')
+                fit_func=fit_func)
 
 if __name__=="__main__":
     path_to_files = './data/'

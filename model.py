@@ -8,6 +8,8 @@ attention and surround suppression
 import numpy as np
 import tools
 reload(tools)
+import analyze_constant
+reload(analyze_constant)
 from analyze_constant import run_analysis
 
 if __name__=="__main__":
@@ -35,7 +37,7 @@ if __name__=="__main__":
     f.write('trial,cue_side,ask_side,r_contrast1,r_contrast2,l_contrast1,l_contrast2,answer,ask_contrast\n')
 
     # Run an integer multiple of the center_comparison conditions trials:
-    for trial in range(20 * len(center_comparison)):
+    for trial in range(50 * len(center_comparison)):
         f.write('%s,'%trial)
     
         side_idx = np.random.randint(0,2)

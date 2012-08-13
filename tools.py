@@ -639,19 +639,48 @@ def get_data(file_name=None):
     return p,l,data_rec
 
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
-                     fit_func='cumgauss', log_scale=False, boot=1000):
+                     fit_func='cumgauss', log_scale=False, boot=1000,
+                     leave_one_out=False):
     """
     This analyzes data from the constant stimuli experiment
+
+    Parameters
+    ----------
+    data_file: str,
+        the full path to a file with some data. If this is not provided, the
+        user will be prompted to navigate to the file with a file-browser. 
+
+    fig_name: str, 
+        The name of the figure to save. If not provided, the figure will not be
+        saved.
+    cue_cond: str,
+        whether to analyze the 'cued' condition or the 'other' condition.
+
+    fit_func: str,
+         What type of function to fit to the data ('cumgauss' or 'weib')
+
+    log_scale: bool,
+        Whether to transform things into a log scale (FWIW).
+
+    boot: int,
+        The number of iterations of fitting in the boot-strap procedure.
+
     """
     
-    def cumgauss(x, mu,sigma):
+    def cumgauss(x, mu, sigma, low_asym=0, high_asym=1):
         """
         The cumulative Gaussian at x, for the distribution with mean mu and
-        standard deviation sigma.
+        standard deviation sigma. Additional parameters allow fitting high and
+        low asymptote if needed
 
-        Based on: http://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
+        Based on:
+        http://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
+
         """
-        return 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
+        cg = 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
+        cg = cg/np.max(cg) * (high_asym - low_asym)
+        cg = cg + low_asym
+        return cg 
 
     def weibull(x,threshx,slope,guess,flake,threshy=None):
         if threshy is None:
@@ -679,12 +708,21 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             thresh, slope, guess, flake = params
             return weibull(x, thresh, slope, guess, flake)
 
+        def cumgauss_fit_w_asym(params):
+            """
+
+            """
+            mu,sigma,low_a,high_a = params
+            return cumgauss(x, mu, sigma, low_a, high_a)
+            
         def err_func(params):
             """
             Error function
             """
             if fit_func=='cumgauss':
                 return y - cumgauss_fit(params)
+            if fit_func=='cumgauss_w_asym':
+                return y - cumgauss_fit_w_asym(params)
             elif fit_func=='weib':
                 return y - weib_fit(params)
 
@@ -746,9 +784,12 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         # (no bias):
         if fit_func == 'cumgauss':
             initial = contrast, 1
+        elif fit_func == 'cumgauss_w_asym':
+            initial = contrast, 1, 0, 1
         elif fit_func == 'weib':
             initial = contrast, 3.5, 0, 1
-            
+        
+        print("Using the %s function to analyze this"%fit_func)
         x,y,this_fit = fit_th(x,this_ans,this_ask,initial)
         
         # Store stuff for plotting:
@@ -793,6 +834,8 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
 
             if fit_func == 'cumgauss':
                 plotter = cumgauss
+            elif fit_func == 'cumgauss_w_asym':
+                plotter = cumgauss
             elif fit_func == 'weib':
                 plotter = weibull
             ax.plot(x_for_plot,plotter(x_for_plot,*fits[i]),
@@ -802,7 +845,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                                             (boot_th_ub[i]-boot_th_lb[i])/2,
                                                       fits[i][1],
                                             (boot_sl_ub[i]-boot_sl_lb[i])/2))
-            print("For the file: %s \n %s \n"%(data_file, cue_cond) +texter)
+            print("For the file: %s \n %s \n"%(data_file, cue_cond) + texter)
 
             # Indicate the values of the fit:
             ax.text(fits[i][0] + 0.1, fits[i][0] + 0.1,texter)
@@ -823,3 +866,17 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             out['y'].append(y[x_idx[0]])
             out['trials'].append(np.sum(keep_x[i]==this_x))
     return out
+
+
+def analyze_leave_one_out():
+    """
+
+    An LOO assessment of the goodness of fit of the
+    data. In each iteration, we fit a function to the data
+
+    n R-squared value is provided, which is the
+    correlation between the actual performance at different left-out
+    contrast levels and the prediction from fitting to the rest of the data
+    in each LOO iteration.
+    """
+    raise NotImplementedError
