@@ -237,8 +237,8 @@ if __name__ == "__main__":
         win.flip()
 
         # dbg:
-        win.getMovieFrame()
-        win.saveMovieFrames('/Users/arokem/projects/att_ss/figures/fig.png')
+        #win.getMovieFrame()
+        #win.saveMovieFrames('/Users/arokem/projects/att_ss/figures/fig.png')
               
         core.wait(p.cue_dur)
 
