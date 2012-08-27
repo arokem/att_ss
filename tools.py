@@ -721,7 +721,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             """
             if fit_func=='cumgauss':
                 return y - cumgauss_fit(params)
-            if fit_func=='cumgauss_w_asym':
+            elif fit_func=='cumgauss_w_asym':
                 return y - cumgauss_fit_w_asym(params)
             elif fit_func=='weib':
                 return y - weib_fit(params)

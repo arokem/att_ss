@@ -36,7 +36,7 @@ reload(tools)
 from tools import analyze_constant, get_data
 
 
-def cumgauss(x, mu,sigma):
+def cumgauss(x, mu, sigma):
         """
         The cumulative Gaussian at x, for the distribution with mean mu and
         standard deviation sigma.
@@ -44,6 +44,10 @@ def cumgauss(x, mu,sigma):
         Based on: http://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
         """
         return 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
+
+############################
+fit_func = 'cumgauss'
+############################
 
 path_to_files = '/Users/arokem/Dropbox/att_ss/Analysis/'
 dirlist = os.listdir(path_to_files)
@@ -83,7 +87,9 @@ for this_sub in sub_id:
                 for cue in conds:
                     print("Condition: %s"%cue)
                     this = analyze_constant(path_to_files + this_file,
-                                            cue_cond=cue, log_scale=True)
+                                            cue_cond=cue, log_scale=False,
+			                    fit_func=fit_func)
+		    print this['fit'][0]['th']
                     df[this_sub][p[' center_ori'],p[' surr_ori']][cue] = this
                     file_out_R.write('%s,%s,%s,%s,%s,%s\n'%(this_sub,
                                 p[' center_ori'],
@@ -97,7 +103,9 @@ for this_sub in sub_id:
                 print("Condition: neutral")
                 # The neutral condition takes "other as input"
                 this = analyze_constant(path_to_files + this_file,
-                                        cue_cond='other', log_scale=True) 
+                                        cue_cond='other', log_scale=False,
+			                fit_func=fit_func)
+		print this['fit'][0]['th']
                 df[this_sub][p[' center_ori'],p[' surr_ori']]['neutral'] = this
                 file_out_R.write('%s,%s,%s,neutral,%s,%s\n'%(this_sub,
                                     p[' center_ori'],
@@ -232,7 +240,7 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
                     marker='o',
             color=colors[cue_cond])
         
-        x_for_plot = np.linspace(-2, 0, 100)
+        x_for_plot = np.linspace(0,1,100)
 
         psycho = cumgauss(x_for_plot,
                           np.mean(th[cue_cond],0),
@@ -301,9 +309,9 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
                         yerr=stats.sem(sl[cue_cond],0),
                         color='k')
 
-fig.savefig(path_to_files + 'figures/psycho_curves_wo8_log10.png')
-fig_bar_th.savefig(path_to_files + 'figures/thresholds_wo8_log10.png')
-fig_bar_sl.savefig(path_to_files + 'figures/slopes_wo8_log10.png')
+fig.savefig(path_to_files + 'figures/psycho_curves_wo8.png')
+fig_bar_th.savefig(path_to_files + 'figures/thresholds_wo8.png')
+fig_bar_sl.savefig(path_to_files + 'figures/slopes_wo8.png')
 
 
 x = {(0,0):dict(cued=[], other=[], neutral=[]),
@@ -407,7 +415,7 @@ for this,fig_name in zip([th, sl],['threshold', 'slope']):
                          '0/uncued'])
     ax.set_ylabel('%s(para) - %s(ortho)/%s(para) + %s(ortho)'%(
         fig_name,fig_name,fig_name,fig_name))
-    fig.savefig(path_to_files + 'figures/%s_ss_wo8_log10.png'%fig_name)
+    fig.savefig(path_to_files + 'figures/%s_ss_wo8.png'%fig_name)
 
 
 
@@ -442,7 +450,7 @@ for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
         ax.set_xlabel('Parallel')
                     
         
-fig.savefig(path_to_files + 'figures/scatter_th_wo8_log10.png')
+fig.savefig(path_to_files + 'figures/scatter_th_wo8.png')
 
 fig = plt.figure()
 fig.set_size_inches([15,10])
@@ -475,4 +483,4 @@ for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
         ax.set_xlabel('Parallel')
                     
         
-fig.savefig(path_to_files + 'figures/scatter_sl_wo8_log10.png')
+fig.savefig(path_to_files + 'figures/scatter_sl_wo8.png')
