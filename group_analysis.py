@@ -33,20 +33,13 @@ rc('font', size=14)
 # Import our own analysis stuff
 import tools
 reload(tools)
-from tools import analyze_constant, get_data
 
 
-def cumgauss(x, mu, sigma):
-        """
-        The cumulative Gaussian at x, for the distribution with mean mu and
-        standard deviation sigma.
-
-        Based on: http://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
-        """
-        return 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
-
+# Switches on the fit function to use for the psychometric curves:
 ############################
 fit_func = 'cumgauss'
+plot_func = tools.cumgauss
+n_params = 2
 ############################
 
 path_to_files = '/Users/arokem/Dropbox/att_ss/Analysis/'
@@ -57,7 +50,7 @@ cue_conds = ['cued', 'other', 'neutral']
 n_subjects = 17
 sub_id = ['S%02d'%(i+1) for i in range(n_subjects)]
 
-# Excluding S13 - that's a non-starter :
+# Excluding S13 - that's a non-starter (basically no data) :
 sub_id = sub_id[:12] + sub_id[13:]
 
 # Excluding S08 - outlier:
@@ -66,7 +59,12 @@ sub_id = sub_id[:7] + sub_id[8:]
 print sub_id
 
 file_out_R = file('/Users/arokem/Dropbox/att_ss/file4R.csv', 'w')
-file_out_R.write('subject,abs_ori,rel_ori,cue,th,sl \n')
+file_out_R.write('subject,abs_ori,rel_ori,cue')
+for para in range(n_params):
+	file_out_R.write(',p%i'%(para+1))
+file_out_R.write('\n')
+
+boots = 1
 
 df = {}
 for this_sub in sub_id:
@@ -76,7 +74,7 @@ for this_sub in sub_id:
         # Only look at files from this subject:
         if this_file.startswith(this_sub):
             print("File: %s"%this_file)
-            p,l,d = get_data(path_to_files + this_file)
+            p,l,d = tools.get_data(path_to_files + this_file)
             # The key differs, depending on the 
             if p.has_key('cue_reliability'):
                 cue_reliability = p['cue_reliability']
@@ -85,33 +83,39 @@ for this_sub in sub_id:
             if isinstance(cue_reliability, float):
                 conds = cue_conds[:2]
                 for cue in conds:
-                    print("Condition: %s"%cue)
-                    this = analyze_constant(path_to_files + this_file,
+
+		    print("Condition: %s"%cue)
+                    this = tools.analyze_constant(path_to_files + this_file,
                                             cue_cond=cue, log_scale=False,
-			                    fit_func=fit_func)
-		    print this['fit'][0]['th']
+			                    fit_func=fit_func, boot=boots)
+
+		    print this['fit'][0][0]
                     df[this_sub][p[' center_ori'],p[' surr_ori']][cue] = this
-                    file_out_R.write('%s,%s,%s,%s,%s,%s\n'%(this_sub,
+                    file_out_R.write('%s,%s,%s,%s'%(this_sub,
                                 p[' center_ori'],
                                 np.abs(p[' center_ori'] - p[' surr_ori']),
-                                cue,
-                                this['fit'][0]['th'],
-                                this['fit'][0]['sl']))
-                        
+                                cue))
+		    for para in this['fit'][0]:
+			    file_out_R.write(',%s'%para)
+		    file_out_R.write('\n')
 
             else:
                 print("Condition: neutral")
-                # The neutral condition takes "other as input"
-                this = analyze_constant(path_to_files + this_file,
+
+                # The neutral condition takes "other" as input:
+                this = tools.analyze_constant(path_to_files + this_file,
                                         cue_cond='other', log_scale=False,
-			                fit_func=fit_func)
-		print this['fit'][0]['th']
+			                fit_func=fit_func, boot=boots)
+
+		print this['fit'][0][0]
+		
                 df[this_sub][p[' center_ori'],p[' surr_ori']]['neutral'] = this
-                file_out_R.write('%s,%s,%s,neutral,%s,%s\n'%(this_sub,
+                file_out_R.write('%s,%s,%s,neutral'%(this_sub,
                                     p[' center_ori'],
-                                    np.abs(p[' center_ori'] - p[' surr_ori']),
-                                    this['fit'][0]['th'],
-                                    this['fit'][0]['sl']))
+                                    np.abs(p[' center_ori'] - p[' surr_ori'])))
+		for para in this['fit'][0]:
+			file_out_R.write(',%s'%para)
+		file_out_R.write('\n')
                 
 file_out_R.close()
 df = pandas.DataFrame(df)
@@ -126,13 +130,13 @@ rstats(
 
     aov_th = ezANOVA(data,
                  wid=.(subject),
-                 dv=.(th),
+                 dv=.(p1),
                  within=.(cue, rel_ori, abs_ori),
                  )
 
     aov_sl = ezANOVA(data,
                  wid=.(subject),
-                 dv=.(sl),
+                 dv=.(p2),
                  within=.(cue, rel_ori, abs_ori),
                  )
            '''
@@ -185,14 +189,14 @@ for file_out in [file_out_th, file_out_sl]:
 
 for sub in df.columns:
     file_out_th.write('%s, '%sub +
-                   ''.join(['%s, '%df[sub][i,j][cond]['fit'][0]['th']
+                   ''.join(['%s, '%df[sub][i,j][cond]['fit'][0][0]
                             for cond in cue_conds
                             for i in [0,90]
                             for j in [0,90]
                             ]) + '\n')
 
     file_out_sl.write('%s, '%sub +
-                   ''.join(['%s, '%df[sub][i,j][cond]['fit'][0]['sl']
+                   ''.join(['%s, '%df[sub][i,j][cond]['fit'][0][1]
                             for cond in cue_conds
                             for i in [0,90]
                             for j in [0,90]
@@ -215,14 +219,17 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
     y = dict(cued=[], other=[], neutral=[])
     th = dict(cued=[], other=[], neutral=[])
     sl = dict(cued=[], other=[], neutral=[])
+    fit = dict(cued=[], other=[], neutral=[])
 
     for sub in df.columns:
         for cue_cond in cue_conds: 
             x[cue_cond].append(df[sub][ori][cue_cond]['x'])
             y[cue_cond].append(df[sub][ori][cue_cond]['y'])
-            th[cue_cond].append(df[sub][ori][cue_cond]['fit'][0]['th'])
-            sl[cue_cond].append(df[sub][ori][cue_cond]['fit'][0]['sl'])
+            th[cue_cond].append(df[sub][ori][cue_cond]['fit'][0][0])
+            sl[cue_cond].append(df[sub][ori][cue_cond]['fit'][0][1])
+	    fit[cue_cond].append(df[sub][ori][cue_cond]['fit'][0])
 
+            
     ax = fig.add_subplot(2,2,ori_idx)
     ax_bar_th = fig_bar_th.add_subplot(2,2,ori_idx)
     ax_bar_sl = fig_bar_sl.add_subplot(2,2,ori_idx)
@@ -241,35 +248,35 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
             color=colors[cue_cond])
         
         x_for_plot = np.linspace(0,1,100)
-
-        psycho = cumgauss(x_for_plot,
-                          np.mean(th[cue_cond],0),
-                          np.mean(sl[cue_cond],0))
+	
+	p_args = [np.mean(it, 0) for it in np.array(fit[cue_cond]).T]
+        psycho = plot_func(x_for_plot, *p_args)
 
 	psycho_lower = []
 	psycho_upper = []
-	for this_x_for_plot in x_for_plot:
-		psycho_lower.append(np.min([cumgauss(this_x_for_plot,
-						    np.mean(th[cue_cond]) -
-						    stats.sem(th[cue_cond]),
-						    np.mean(sl[cue_cond]) +
-			                            stats.sem(sl[cue_cond])),
-					     cumgauss(this_x_for_plot,
-						      np.mean(th[cue_cond]) +
-						      stats.sem(th[cue_cond]),
-						      np.mean(sl[cue_cond]) -
-						     stats.sem(sl[cue_cond]))]))
+	if fit_func == 'cumgauss':
+		for this_x_for_plot in x_for_plot:
+			psycho_lower.append(np.min([plot_func(this_x_for_plot,
+							np.mean(th[cue_cond]) -
+							stats.sem(th[cue_cond]),
+							np.mean(sl[cue_cond]) +
+							stats.sem(sl[cue_cond])),
+					          plot_func(this_x_for_plot,
+							np.mean(th[cue_cond]) +
+							stats.sem(th[cue_cond]),
+							np.mean(sl[cue_cond]) -
+						stats.sem(sl[cue_cond]))]))
 
-		psycho_upper.append(np.max([cumgauss(this_x_for_plot,
-						    np.mean(th[cue_cond]) -
-						    stats.sem(th[cue_cond]),
-						    np.mean(sl[cue_cond]) +
-			                            stats.sem(sl[cue_cond])),
-					     cumgauss(this_x_for_plot,
-						      np.mean(th[cue_cond]) +
-						      stats.sem(th[cue_cond]),
-						      np.mean(sl[cue_cond]) -
-						     stats.sem(sl[cue_cond]))]))
+			psycho_upper.append(np.max([plot_func(this_x_for_plot,
+						np.mean(th[cue_cond]) -
+						stats.sem(th[cue_cond]),
+						np.mean(sl[cue_cond]) +
+						stats.sem(sl[cue_cond])),
+						plot_func(this_x_for_plot,
+							np.mean(th[cue_cond]) +
+							stats.sem(th[cue_cond]),
+							np.mean(sl[cue_cond]) -
+						stats.sem(sl[cue_cond]))]))
 
     
         ax.plot(x_for_plot, psycho, color=colors[cue_cond])
@@ -281,9 +288,10 @@ for ori_idx, ori in enumerate([(0,0),(90,0),(0,90),(90,90)]):
         ax.set_yticklabels(['%s'%(i*100) for i in np.arange(0,1,0.2)])
         ax.set_ylim([0,1])
         
-        
-        ax.fill_between(x_for_plot, psycho_lower, psycho_upper,
-                        color=colors[cue_cond], alpha=0.2)
+
+	if fit_func == 'cumgauss':
+		ax.fill_between(x_for_plot, psycho_lower, psycho_upper,
+		                color=colors[cue_cond], alpha=0.2)
 	ax.plot([0.3,0.3], [0,100], 'k--')
         
         ax.errorbar(np.mean(th[cue_cond]),
@@ -360,8 +368,8 @@ for cond_idx, cue_cond in enumerate(cue_conds):
         for ori in df.index:
             x[ori][cue_cond].append(df[sub][ori][cue_cond]['x'])
             y[ori][cue_cond].append(df[sub][ori][cue_cond]['y'])
-            th[ori][cue_cond].append(df[sub][ori][cue_cond]['fit'][0]['th'])
-            sl[ori][cue_cond].append(df[sub][ori][cue_cond]['fit'][0]['sl'])
+            th[ori][cue_cond].append(df[sub][ori][cue_cond]['fit'][0][0])
+            sl[ori][cue_cond].append(df[sub][ori][cue_cond]['fit'][0][1])
             th_ub[ori][cue_cond].append(df[sub][ori][cue_cond]['boot_th_ub'])
             th_lb[ori][cue_cond].append(df[sub][ori][cue_cond]['boot_th_lb'])
             sl_ub[ori][cue_cond].append(df[sub][ori][cue_cond]['boot_sl_ub'])

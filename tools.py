@@ -638,6 +638,99 @@ def get_data(file_name=None):
     
     return p,l,data_rec
 
+
+def cumgauss(x, mu, sigma, low_asym=0, high_asym=1):
+    """
+    The cumulative Gaussian at x, for the distribution with mean mu and
+    standard deviation sigma. Additional parameters allow fitting high and
+    low asymptote if needed
+
+    Based on:
+    http://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
+
+    """
+    cg = 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
+    #cg = cg/np.max(cg) * (high_asym - low_asym)
+    #cg = cg + low_asym
+    return cg 
+
+def weibull(x, threshx, slope, guess, flake, threshy=None):
+    """
+    The cumulative Weibull distribution function at x.
+    """
+    if threshy is None:
+        threshy = 1-(1-guess)*np.exp(-1)
+
+    k = (-np.log( (1-threshy)/(1-guess) ))**(1/slope)
+    weib = flake - (flake-guess)*np.exp(-(k*x/threshx)**slope)
+    return weib 
+
+
+
+def fit_th(x, y, initial, fit_func='cumgauss'):
+    """
+
+    The core of the fitting. Get x values and get the responses (between 0
+    and 1). Then, fit the function according to these values
+    
+    """
+    def cumgauss_fit(params, x):
+        """
+        fit func
+        """
+        mu,sigma = params
+        return cumgauss(x, mu, sigma)
+
+
+    def weib_fit(params, x):
+        """
+        Fitting function for fitting a weibull function
+        """
+        thresh, slope, guess, flake = params
+        return weibull(x, thresh, slope, guess, flake)
+
+
+    def cumgauss_fit_w_asym(params, x):
+        """
+        Fitting function for cumulative Gaussian with asymptotes
+        """
+        mu,sigma,low_a,high_a = params
+        return cumgauss(x, mu, sigma, low_a, high_a)
+
+    def err_func(params, x, y, fit_func):
+        """
+        Error function. Handles boundary setting. For example, thresholds can't
+        be smaller than 0, or larger than 1.
+
+        """
+        if fit_func=='cumgauss':
+            if params[0] > 1:
+                return np.inf
+            if params[0] < 0:
+                return np.inf
+            return y - cumgauss_fit(params, x)
+        elif fit_func=='cumgauss_w_asym':
+            if params[2]<0:
+                return np.inf
+            if params[3]>1:
+                return np.inf
+            return y - cumgauss_fit_w_asym(params, x)
+        elif fit_func=='weib':
+            if params[0] > 1:
+                return np.inf
+            if params[0] < 0:
+                return np.inf
+            #if params[1] < 3.4:
+            #    return np.inf
+            #if params[1] > 3.6:
+            #    return np.inf
+            return y - weib_fit(params, x)
+
+    this_fit, msg = leastsq(err_func, initial, args=(x, y, fit_func))
+    # If you get back a nan, replace with the initial guess:
+    this_fit[np.isnan(this_fit)] = np.array(initial)[np.isnan(this_fit)]
+    return this_fit
+
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                      fit_func='cumgauss', log_scale=False, boot=1000,
                      leave_one_out=False):
@@ -666,74 +759,6 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         The number of iterations of fitting in the boot-strap procedure.
 
     """
-    
-    def cumgauss(x, mu, sigma, low_asym=0, high_asym=1):
-        """
-        The cumulative Gaussian at x, for the distribution with mean mu and
-        standard deviation sigma. Additional parameters allow fitting high and
-        low asymptote if needed
-
-        Based on:
-        http://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
-
-        """
-        cg = 0.5 * (1 + erf((x-mu)/(np.sqrt(2)*sigma)))
-        cg = cg/np.max(cg) * (high_asym - low_asym)
-        cg = cg + low_asym
-        return cg 
-
-    def weibull(x,threshx,slope,guess,flake,threshy=None):
-        if threshy is None:
-            threshy = 1-(1-guess)*np.exp(-1)
-            
-            k = (-np.log( (1-threshy)/(1-guess) ))**(1/slope)
-            weib = flake - (flake-guess)*np.exp(-(k*x/threshx)**slope)
-            return weib 
-
-    
-    def fit_th(x, ans, ask, initial):
-        """
-        The core of the fitting. Get x values and get the responses (between 0
-        and 1). Then, fit the function according to these values
-        """
-        # Define the fit/error functions in the scope of the wrapper function:
-        def cumgauss_fit(params):
-            """
-            fit func
-            """
-            mu,sigma = params
-            return cumgauss(x, mu, sigma)
-
-        def weib_fit(params):
-            thresh, slope, guess, flake = params
-            return weibull(x, thresh, slope, guess, flake)
-
-        def cumgauss_fit_w_asym(params):
-            """
-
-            """
-            mu,sigma,low_a,high_a = params
-            return cumgauss(x, mu, sigma, low_a, high_a)
-            
-        def err_func(params):
-            """
-            Error function
-            """
-            if fit_func=='cumgauss':
-                return y - cumgauss_fit(params)
-            elif fit_func=='cumgauss_w_asym':
-                return y - cumgauss_fit_w_asym(params)
-            elif fit_func=='weib':
-                return y - weib_fit(params)
-
-        # Generate the y axis:
-        y = []
-        for i in range(len(ans)):
-            y.append(np.mean(ans[ask==ask[i]]))
-
-        this_fit, msg = leastsq(err_func, initial)
-
-        return x, y, this_fit
 
     p,l,data_rec = get_data(data_file)
 
@@ -788,10 +813,14 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             initial = contrast, 1, 0, 1
         elif fit_func == 'weib':
             initial = contrast, 3.5, 0, 1
-        
+
+        # Generate the y axis:
+        y = []
+        for i in range(len(this_ans)):
+            y.append(np.mean(this_ans[this_ask==this_ask[i]]))
+
         print("Using the %s function to analyze this"%fit_func)
-        x,y,this_fit = fit_th(x,this_ans,this_ask,initial)
-        
+        this_fit = fit_th(x, y, initial, fit_func)
         # Store stuff for plotting:
         fits.append(this_fit)
         keep_x.append(x)
@@ -808,8 +837,12 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             boot_x = x[idx]
             boot_ans = this_ans[idx]
             boot_ask = this_ask[idx]
+            boot_y = []
+            for i in range(len(boot_ans)):
+                boot_y.append(np.mean(boot_ans[boot_ask==boot_ask[i]]))
+
             # Use the same initial value guess as above:
-            this_x, this_y, boot_fit = fit_th(boot_x, boot_ans, boot_ask,initial)
+            boot_fit = fit_th(boot_x, boot_y, initial, fit_func)
             boot_th.append(boot_fit[0])
             boot_sl.append(boot_fit[1])
             
@@ -859,7 +892,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
 
     # Make the return values:
     for i, fit in enumerate(fits):
-        out['fit'].append(dict(th=fit[0], sl=fit[1]))
+        out['fit'].append(fit)
         for idx, this_x in enumerate(np.unique(keep_x[i])):
             x_idx = np.where(keep_x[i]==this_x)[0]
             out['x'].append(x[x_idx[0]])
@@ -867,16 +900,3 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
             out['trials'].append(np.sum(keep_x[i]==this_x))
     return out
 
-
-def analyze_leave_one_out():
-    """
-
-    An LOO assessment of the goodness of fit of the
-    data. In each iteration, we fit a function to the data
-
-    n R-squared value is provided, which is the
-    correlation between the actual performance at different left-out
-    contrast levels and the prediction from fitting to the rest of the data
-    in each LOO iteration.
-    """
-    raise NotImplementedError
