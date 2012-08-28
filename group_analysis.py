@@ -33,18 +33,16 @@ rc('font', size=14)
 # Import our own analysis stuff
 import tools
 reload(tools)
-import get_data_frame
-reload(get_data_frame)
 
 cue_conds = ['cued', 'other', 'neutral']
 plot_func=tools.cumgauss
 fit_func='cumgauss'
 path_to_files='/Users/arokem/Dropbox/att_ss/Analysis/'
-df = get_data_frame.get_df(17,
-			   path_to_files=path_to_files,
-			   exclude=[8,13],
-	                   cue_conds=cue_conds,
-	                   fit_func=fit_func)
+df = tools.get_df(17,
+		  path_to_files=path_to_files,
+		  exclude=[8,13],
+		  cue_conds=cue_conds,
+	          fit_func=fit_func)
 
 rstats(
 '''
