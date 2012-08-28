@@ -33,92 +33,19 @@ rc('font', size=14)
 # Import our own analysis stuff
 import tools
 reload(tools)
-
-
-# Switches on the fit function to use for the psychometric curves:
-############################
-fit_func = 'cumgauss'
-plot_func = tools.cumgauss
-n_params = 2
-############################
-
-path_to_files = '/Users/arokem/Dropbox/att_ss/Analysis/'
-dirlist = os.listdir(path_to_files)
+import get_data_frame
+reload(get_data_frame)
 
 cue_conds = ['cued', 'other', 'neutral']
+plot_func=tools.cumgauss
+fit_func='cumgauss'
+path_to_files='/Users/arokem/Dropbox/att_ss/Analysis/'
+df = get_data_frame.get_df(17,
+			   path_to_files=path_to_files,
+			   exclude=[8,13],
+	                   cue_conds=cue_conds,
+	                   fit_func=fit_func)
 
-n_subjects = 17
-sub_id = ['S%02d'%(i+1) for i in range(n_subjects)]
-
-# Excluding S13 - that's a non-starter (basically no data) :
-sub_id = sub_id[:12] + sub_id[13:]
-
-# Excluding S08 - outlier:
-sub_id = sub_id[:7] + sub_id[8:]
-
-print sub_id
-
-file_out_R = file('/Users/arokem/Dropbox/att_ss/file4R.csv', 'w')
-file_out_R.write('subject,abs_ori,rel_ori,cue')
-for para in range(n_params):
-	file_out_R.write(',p%i'%(para+1))
-file_out_R.write('\n')
-
-boots = 1
-
-df = {}
-for this_sub in sub_id:
-    print("Analyzing %s"%this_sub)
-    df[this_sub] = {(0,0):{}, (0,90):{}, (90,0):{}, (90,90):{}}
-    for this_file in dirlist:
-        # Only look at files from this subject:
-        if this_file.startswith(this_sub):
-            print("File: %s"%this_file)
-            p,l,d = tools.get_data(path_to_files + this_file)
-            # The key differs, depending on the 
-            if p.has_key('cue_reliability'):
-                cue_reliability = p['cue_reliability']
-            else:
-                cue_reliability = p[' cue_reliability']
-            if isinstance(cue_reliability, float):
-                conds = cue_conds[:2]
-                for cue in conds:
-
-		    print("Condition: %s"%cue)
-                    this = tools.analyze_constant(path_to_files + this_file,
-                                            cue_cond=cue, log_scale=False,
-			                    fit_func=fit_func, boot=boots)
-
-		    print this['fit'][0][0]
-                    df[this_sub][p[' center_ori'],p[' surr_ori']][cue] = this
-                    file_out_R.write('%s,%s,%s,%s'%(this_sub,
-                                p[' center_ori'],
-                                np.abs(p[' center_ori'] - p[' surr_ori']),
-                                cue))
-		    for para in this['fit'][0]:
-			    file_out_R.write(',%s'%para)
-		    file_out_R.write('\n')
-
-            else:
-                print("Condition: neutral")
-
-                # The neutral condition takes "other" as input:
-                this = tools.analyze_constant(path_to_files + this_file,
-                                        cue_cond='other', log_scale=False,
-			                fit_func=fit_func, boot=boots)
-
-		print this['fit'][0][0]
-		
-                df[this_sub][p[' center_ori'],p[' surr_ori']]['neutral'] = this
-                file_out_R.write('%s,%s,%s,neutral'%(this_sub,
-                                    p[' center_ori'],
-                                    np.abs(p[' center_ori'] - p[' surr_ori'])))
-		for para in this['fit'][0]:
-			file_out_R.write(',%s'%para)
-		file_out_R.write('\n')
-                
-file_out_R.close()
-df = pandas.DataFrame(df)
 rstats(
 '''
     library(ez)
@@ -174,7 +101,6 @@ print(rstats.aov_sl)
 
 ## print("***** MANOVA :*******")
 ## print(rstats.summary(rstats.maov))
-
 
 
 file_out_th = file('/Users/arokem/Dropbox/att_ss/file4SPSS_th.csv', 'w')

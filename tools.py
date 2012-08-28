@@ -733,7 +733,8 @@ def fit_th(x, y, initial, fit_func='cumgauss'):
 
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                      fit_func='cumgauss', log_scale=False, boot=1000,
-                     leave_one_out=False):
+                     leave_one_out=False,
+                     verbose=True):
     """
     This analyzes data from the constant stimuli experiment
 
@@ -819,7 +820,8 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         for i in range(len(this_ans)):
             y.append(np.mean(this_ans[this_ask==this_ask[i]]))
 
-        print("Using the %s function to analyze this"%fit_func)
+        if verbose:
+            print("Using the %s function to analyze this"%fit_func)
         this_fit = fit_th(x, y, initial, fit_func)
         # Store stuff for plotting:
         fits.append(this_fit)
