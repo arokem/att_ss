@@ -1002,3 +1002,334 @@ def get_df(n_subjects,
     file_out_R.close()
     return pandas.DataFrame(df)
 
+def coeff_of_determination(data, model, axis=-1):
+    """
+
+     http://en.wikipedia.org/wiki/Coefficient_of_determination
+
+              _                                            _
+             |    sum of the squared residuals              |
+    R^2 =    |1 - ---------------------------------------   | * 100
+             |_    sum of the squared mean-subtracted data _|
+
+
+    """
+    # There's no point in doing any of this: 
+    if np.all(data==0.0) and np.all(model==0.0):
+        return np.nan
+    
+    residuals = data - model
+    ss_err = np.sum(residuals ** 2, axis=axis)
+
+    demeaned_data = data - np.mean(data,-1)[...,np.newaxis]
+    ss_tot = np.sum(demeaned_data **2, axis=axis)
+
+    # Don't divide by 0:
+    if np.all(ss_tot==0.0):
+        return np.nan
+    
+    return 1 - (ss_err/ss_tot)
+
+def split_half(df, cue, center_ori, surr_ori, perm=None):
+    """
+
+    Get y from one (randimly chosen) half of the data and params from the other
+    half.
+    
+    """
+    keys = df.keys()
+    if perm is None:
+        perm = np.random.permutation(keys)
+    y_keys = perm[:len(keys)/2]
+    param_keys = perm[len(keys)/2:]
+
+    y = []
+    for k in y_keys:
+        y.append(df[k][surr_ori, center_ori][cue]['y'])
+        x = df[k][surr_ori, center_ori][cue]['x']
+
+    mu = []
+    sigma = []
+    for k in param_keys:
+        params = df[k][surr_ori,center_ori][cue]['fit'][0]
+        mu.append(params[0])
+        sigma.append(params[1])
+        
+    return np.array(x), np.array(y), np.array(mu), np.array(sigma)
+
+
+def model_evaluation_split_half(df):
+    """
+    Evaluate models with split half cross-validation
+    """    
+    oris=[0,90]
+    cue_conds = ['cued', 'other', 'neutral']
+
+
+    sh_y = {(0,0):dict.fromkeys(cue_conds),
+             (0,90):dict.fromkeys(cue_conds),
+             (90,0):dict.fromkeys(cue_conds),
+             (90,90):dict.fromkeys(cue_conds)}
+
+    sh_mu = {(0,0):dict.fromkeys(cue_conds),
+             (0,90):dict.fromkeys(cue_conds),
+             (90,0):dict.fromkeys(cue_conds),
+             (90,90):dict.fromkeys(cue_conds)}
+
+    sh_sigma = {(0,0):dict.fromkeys(cue_conds),
+                 (0,90):dict.fromkeys(cue_conds),
+                 (90,0):dict.fromkeys(cue_conds),
+                 (90,90):dict.fromkeys(cue_conds)}
+
+    for center_ori in oris:
+        for surr_ori in oris: 
+            for cue in cue_conds:
+                perm = np.random.permutation(df.keys())
+                (x,
+                 sh_y[center_ori, surr_ori][cue],
+                 sh_mu[center_ori, surr_ori][cue],
+                 sh_sigma[center_ori, surr_ori][cue]) = split_half(df,
+                                                                   cue,
+                                                                   center_ori,
+                                                                   surr_ori,
+                                                                   perm)
+
+    RR = []
+
+    # First model: nothing matters: all averages all the time:
+    y = []
+    pred = []
+    for center_ori in oris:
+        for surr_ori in oris: 
+            for cue in cue_conds:
+                y.append(np.mean(sh_y[center_ori, surr_ori][cue], 0))
+                
+                mu = np.mean([np.mean(sh_mu[0, 0]['cued'],0),
+                              np.mean(sh_mu[0, 0]['neutral'],0),
+                              np.mean(sh_mu[0, 0]['other'],0),
+                              np.mean(sh_mu[0, 90]['cued'],0),
+                              np.mean(sh_mu[0, 90]['neutral'],0),
+                              np.mean(sh_mu[0, 90]['other'],0),
+                              np.mean(sh_mu[90, 90]['cued'],0),
+                              np.mean(sh_mu[90, 90]['neutral'],0),
+                              np.mean(sh_mu[90, 90]['other'],0),
+                              np.mean(sh_mu[90, 0]['cued'],0),
+                              np.mean(sh_mu[90, 0]['neutral'],0),
+                              np.mean(sh_mu[90, 0]['other'],0)])
+
+                sigma = np.mean([np.mean(sh_sigma[0, 0]['cued'],0),
+                              np.mean(sh_sigma[0, 0]['neutral'],0),
+                              np.mean(sh_sigma[0, 0]['other'],0),
+                              np.mean(sh_sigma[0, 90]['cued'],0),
+                              np.mean(sh_sigma[0, 90]['neutral'],0),
+                              np.mean(sh_sigma[0, 90]['other'],0),
+                              np.mean(sh_sigma[90, 90]['cued'],0),
+                              np.mean(sh_sigma[90, 90]['neutral'],0),
+                              np.mean(sh_sigma[90, 90]['other'],0),
+                              np.mean(sh_sigma[90, 0]['cued'],0),
+                              np.mean(sh_sigma[90, 0]['neutral'],0),
+                              np.mean(sh_sigma[90, 0]['other'],0)])
+                
+                pred.append(cumgauss(x, mu, sigma))
+    RR.append(coeff_of_determination(np.array(y).ravel(),np.array(pred).ravel()))
+
+    # Second model: both mu and sigma depend on both surround condition
+    # (para/ortho) and attention (cued/other/neutral):  
+    y = []
+    pred = []
+    for center_ori in oris:
+        for surr_ori in oris: 
+            for cue in cue_conds:
+                y.append(np.mean(sh_y[center_ori, surr_ori][cue], 0))
+                if center_ori == surr_ori:
+                    sigma = np.mean([np.mean(sh_sigma[0, 0][cue],0),
+                                     np.mean(sh_sigma[90, 90][cue],0)])
+                                    
+                    mu = np.mean([np.mean(sh_mu[0, 0][cue],0),
+                                  np.mean(sh_mu[90, 90][cue],0)])
+                                    
+                else:
+                    sigma = np.mean([np.mean(sh_sigma[0, 90][cue],0),
+                                     np.mean(sh_sigma[90, 0][cue],0)])
+
+                    mu = np.mean([np.mean(sh_mu[0, 90][cue],0),
+                                  np.mean(sh_mu[90, 0][cue],0)])
+     
+                pred.append(cumgauss(x, mu, sigma))
+    RR.append(coeff_of_determination(np.array(y).ravel(),np.array(pred).ravel()))
+
+    
+    # Third model: mu depends on surround condition (para/ortho), sigma
+    # depends on both surround condition (para/ortho) and attention
+    # (cued/other/neutral):  
+    y = []
+    pred = []
+    for center_ori in oris:
+        for surr_ori in oris: 
+            for cue in cue_conds:
+                y.append(np.mean(sh_y[center_ori, surr_ori][cue], 0))
+                if center_ori == surr_ori:
+                    sigma = np.mean([np.mean(sh_sigma[0, 0][cue],0),
+                                     np.mean(sh_sigma[90, 90][cue],0)])
+                                    
+                    mu = np.mean([np.mean(sh_mu[0, 0]['cued'],0),
+                                  np.mean(sh_mu[0, 0]['neutral'],0),
+                                  np.mean(sh_mu[0, 0]['other'],0),
+                                  np.mean(sh_mu[90, 90]['cued'],0),
+                                  np.mean(sh_mu[90, 90]['neutral'],0),
+                                  np.mean(sh_mu[90, 90]['other'],0)])
+                else:
+                    sigma = np.mean([np.mean(sh_sigma[0, 90][cue],0),
+                                     np.mean(sh_sigma[90, 0][cue],0)])
+
+                    mu = np.mean([np.mean(sh_mu[0, 90]['cued'],0),
+                                  np.mean(sh_mu[0, 90]['neutral'],0),
+                                  np.mean(sh_mu[0, 90]['other'],0),
+                                  np.mean(sh_mu[90, 0]['cued'],0),
+                                  np.mean(sh_mu[90, 0]['neutral'],0),
+                                  np.mean(sh_mu[90, 0]['other'],0)])
+
+                              
+                pred.append(cumgauss(x, mu, sigma))
+    RR.append(coeff_of_determination(np.array(y).ravel(),np.array(pred).ravel()))
+
+    return RR
+
+def loo_data(df, cue, center_ori, surr_ori):
+    """
+    Get leave-one-out data for a particular condition
+    """
+    mu = []
+    sigma = []
+    loo_y = []
+    keys = df.keys()
+    for loo in keys:
+        this_loo = df[loo]
+        loo_y.append(this_loo[surr_ori, center_ori][cue]['y'])
+        x = this_loo[surr_ori, center_ori][cue]['x']
+        mu.append([])
+        sigma.append([])
+        
+        for k  in keys:
+            if k!=loo:
+                this_sub = df[k]
+                params = this_sub[surr_ori,center_ori][cue]['fit'][0]
+                mu[-1].append(params[0])
+                sigma[-1].append(params[1])
+        
+    return np.array(x), np.array(loo_y), np.array(mu), np.array(sigma)
+
+def model_evaluation_loo(df):
+    """
+
+    Evaluate a model with LOO cross-validation
+
+    """
+    oris=[0,90]
+    cue_conds = ['cued', 'other', 'neutral']
+    loo_y = {(0,0):dict.fromkeys(cue_conds),
+             (0,90):dict.fromkeys(cue_conds),
+             (90,0):dict.fromkeys(cue_conds),
+             (90,90):dict.fromkeys(cue_conds)}
+
+    loo_mu = {(0,0):dict.fromkeys(cue_conds),
+             (0,90):dict.fromkeys(cue_conds),
+             (90,0):dict.fromkeys(cue_conds),
+             (90,90):dict.fromkeys(cue_conds)}
+
+    loo_sigma = {(0,0):dict.fromkeys(cue_conds),
+                 (0,90):dict.fromkeys(cue_conds),
+                 (90,0):dict.fromkeys(cue_conds),
+                 (90,90):dict.fromkeys(cue_conds)}
+
+    RR1 = {(0,0):dict.fromkeys(cue_conds),
+           (0,90):dict.fromkeys(cue_conds),
+           (90,0):dict.fromkeys(cue_conds),
+           (90,90):dict.fromkeys(cue_conds)}
+
+    RR2 = {(0,0):dict.fromkeys(cue_conds),
+           (0,90):dict.fromkeys(cue_conds),
+           (90,0):dict.fromkeys(cue_conds),
+           (90,90):dict.fromkeys(cue_conds)}
+
+    RR3 = {(0,0):dict.fromkeys(cue_conds),
+           (0,90):dict.fromkeys(cue_conds),
+           (90,0):dict.fromkeys(cue_conds),
+           (90,90):dict.fromkeys(cue_conds)}
+
+    for center_ori in oris:
+        for surr_ori in oris: 
+            for cue in cue_conds:
+                (x,
+                 loo_y[center_ori, surr_ori][cue],
+                 loo_mu[center_ori, surr_ori][cue],
+                 loo_sigma[center_ori, surr_ori][cue]) = loo_data(df,
+                                                                  cue,
+                                                                  center_ori,
+                                                                  surr_ori)
+                
+    for center_ori in oris:
+        for surr_ori in oris: 
+            for cue in cue_conds:
+                # First model: nothing matters, everything is just the mean:
+                RR1[center_ori, surr_ori][cue]=[]
+                for loo_idx in range(len(df.keys())):
+                    mu = np.mean([loo_mu[0,0]['neutral'][loo_idx],
+                                  loo_mu[0,90]['neutral'][loo_idx],
+                                  loo_mu[90,90]['neutral'][loo_idx],
+                                  loo_mu[90,0]['neutral'][loo_idx],
+                                  loo_mu[0,0]['cued'][loo_idx],
+                                  loo_mu[0,90]['cued'][loo_idx],
+                                  loo_mu[90,90]['cued'][loo_idx],
+                                  loo_mu[90,0]['cued'][loo_idx],
+                                  loo_mu[0,0]['other'][loo_idx],
+                                  loo_mu[0,90]['other'][loo_idx],
+                                  loo_mu[90,90]['other'][loo_idx],
+                                  loo_mu[90,0]['other'][loo_idx]])
+
+                    sigma = np.mean([loo_sigma[0,0]['neutral'][loo_idx],
+                                  loo_sigma[0,90]['neutral'][loo_idx],
+                                  loo_sigma[90,90]['neutral'][loo_idx],
+                                  loo_sigma[90,0]['neutral'][loo_idx],
+                                  loo_sigma[0,0]['cued'][loo_idx],
+                                  loo_sigma[0,90]['cued'][loo_idx],
+                                  loo_sigma[90,90]['cued'][loo_idx],
+                                  loo_sigma[90,0]['cued'][loo_idx],
+                                  loo_sigma[0,0]['other'][loo_idx],
+                                  loo_sigma[0,90]['other'][loo_idx],
+                                  loo_sigma[90,90]['other'][loo_idx],
+                                  loo_sigma[90,0]['other'][loo_idx]])
+
+                    RR1[center_ori, surr_ori][cue].append(
+            coeff_of_determination(loo_y[center_ori, surr_ori][cue][loo_idx],
+                                   cumgauss(x, mu, sigma)))
+                # Second model: just the specific condition:
+                RR2[center_ori, surr_ori][cue]=[]
+                for loo_idx in range(len(df.keys())):
+                    mu=np.mean(loo_mu[center_ori, surr_ori][cue][loo_idx])
+                    sigma=np.mean(loo_sigma[center_ori, surr_ori][cue][loo_idx])
+                    
+                    RR2[center_ori, surr_ori][cue].append(
+            coeff_of_determination(loo_y[center_ori, surr_ori][cue][loo_idx],
+                                           cumgauss(x, mu, sigma)))
+                # Third model: surround suppression affects both, cueing
+                # affects slope
+                RR3[center_ori, surr_ori][cue]=[]
+                for loo_idx in range(len(df.keys())):
+                    mu=np.mean(np.hstack(
+                        [loo_mu[center_ori, surr_ori]['cued'][loo_idx],
+                         loo_mu[center_ori, surr_ori]['neutral'][loo_idx],
+                         loo_mu[center_ori, surr_ori]['other'][loo_idx]]))
+                    
+                    sigma=np.mean(loo_sigma[center_ori,surr_ori][cue][loo_idx])
+    
+                    RR3[center_ori, surr_ori][cue].append(
+            coeff_of_determination(loo_y[center_ori, surr_ori][cue][loo_idx],
+                                   cumgauss(x, mu, sigma)))
+
+    
+    return RR1,RR2,RR3
+
+
+
+    

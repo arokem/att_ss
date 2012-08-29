@@ -40,7 +40,7 @@ fit_func='cumgauss'
 path_to_files='/Users/arokem/Dropbox/att_ss/Analysis/'
 df = tools.get_df(17,
 		  path_to_files=path_to_files,
-		  exclude=[8,13],
+		  exclude=[13],
 		  cue_conds=cue_conds,
 	          fit_func=fit_func)
 
