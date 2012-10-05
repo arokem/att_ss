@@ -380,8 +380,7 @@ for ori_idx, oris in enumerate([[(0,90),(0,0)],[(90,0),(90,90)]]):
         ax.set_title('%s, %s'%(cue_cond,oris[0][0]))
         ax.set_ylabel('Orthogonal')
         ax.set_xlabel('Parallel')
-                    
-        
+                            
 fig.savefig(path_to_files + 'figures/scatter_th_wo8.png')
 
 fig = plt.figure()

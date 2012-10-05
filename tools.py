@@ -1,5 +1,6 @@
 import os
 import time
+import pandas as pd
 
 import numpy as np
 try:
@@ -912,10 +913,15 @@ def get_df(n_subjects,
 	   cue_conds=['cued', 'other', 'neutral']):
 
     """
-    Make a pandas data-frame from a whole data-set, while saving data to an
-    R-readable file as well. Idiosyncratic :-( 
+
+    Make pandas data-frames from a whole data-set.
+
+    df contains all of the data (including performance on individual contrast
+    levels and so forth), but is very complicated.
+
+    df2 contains a summary of the data, but is very simple 
+    
     """
-    import pandas
     n_params_dict = dict(cumgauss=2,
                          cumgauss_w_asym=4,
                          weib=4)
@@ -934,13 +940,16 @@ def get_df(n_subjects,
     if verbose:
             print sub_id
 
-    file_out_R = file(file4R, 'w')
-    file_out_R.write('subject,abs_ori,rel_ori,cue')
-    for para in range(n_params):
-            file_out_R.write(',p%i'%(para+1))
-    file_out_R.write('\n')
 
     df = {}
+    df2 = {'subject':[],
+           'abs_ori':[],
+           'rel_ori':[],
+           'cue':[]}
+
+    for para in range(n_params):
+            df2.update({'p%i'%(para+1):[]})
+    
     surr_k = ' surr_ori'
     center_k = ' center_ori'
     for this_sub in sub_id:
@@ -971,13 +980,14 @@ def get_df(n_subjects,
                                               verbose=verbose)
 
                         df[this_sub][p[center_k],p[surr_k]][cue]=this
-                        file_out_R.write('%s,%s,%s,%s'%(this_sub,
-                                    p[center_k],
-                            np.abs(p[center_k] - p[surr_k]),
-                                    cue))
-                        for para in this['fit'][0]:
-                                file_out_R.write(',%s'%para)
-                        file_out_R.write('\n')
+                        df2['subject'].append(this_sub)
+                        df2['abs_ori'].append(str(p[center_k]))
+                        df2['rel_ori'].append(str(np.abs(p[center_k] -
+                                                         p[surr_k])))
+                        df2['cue'].append(cue)
+
+                        for idx, para in enumerate(this['fit'][0]):
+                            df2['p%i'%(idx+1)].append(para)
 
                 else:
                     if verbose:
@@ -992,15 +1002,52 @@ def get_df(n_subjects,
                                                   verbose=verbose)
 
                     df[this_sub][p[center_k],p[surr_k]]['neutral']=this
-                    file_out_R.write('%s,%s,%s,neutral'%(this_sub,
-                                        p[center_k],
-                            np.abs(p[center_k] - p[surr_k])))
-                    for para in this['fit'][0]:
-                            file_out_R.write(',%s'%para)
-                    file_out_R.write('\n')
+                    df2['subject'].append(this_sub)
+                    # These should be treated as categorical in the ANOVA:
+                    df2['abs_ori'].append(str(p[center_k]))
+                    df2['rel_ori'].append(str(np.abs(p[center_k] - p[surr_k])))
+                    df2['cue'].append(cue)
 
-    file_out_R.close()
-    return pandas.DataFrame(df)
+                    for idx, para in enumerate(this['fit'][0]):
+                            df2['p%i'%(idx+1)].append(para)
+
+    return pd.DataFrame(df), pd.DataFrame(df2)
+
+def save_spss_files(df, path='/Users/arokem/Dropbox/att_ss'):
+    """
+    Record stuff from the complicated df into files in an spss format
+    """ 
+    file_out_th = file(path + '/file4SPSS_th.csv', 'w')
+    file_out_sl = file(path + '/file4SPSS_sl.csv', 'w')
+
+    cue_conds = df[df.columns[0]][1].keys()
+    
+    # Make the header row:
+    for file_out in [file_out_th, file_out_sl]:
+        file_out.write('subject, ' + ''.join(['%s_%s_%s, '%(i,j,k)
+                                     for i in cue_conds
+                                     for j in [0,90]
+                                     for k in [0,90]]) + '\n')
+
+    for sub in df.columns:
+        file_out_th.write('%s, '%sub +
+                       ''.join(['%s, '%df[sub][i,j][cond]['fit'][0][0]
+                                for cond in cue_conds
+                                for i in [0,90]
+                                for j in [0,90]
+                                ]) + '\n')
+
+        file_out_sl.write('%s, '%sub +
+                       ''.join(['%s, '%df[sub][i,j][cond]['fit'][0][1]
+                                for cond in cue_conds
+                                for i in [0,90]
+                                for j in [0,90]
+                                ]) + '\n')
+
+    file_out_th.close()
+    file_out_sl.close()
+
+
 
 def coeff_of_determination(data, model, axis=-1):
     """
