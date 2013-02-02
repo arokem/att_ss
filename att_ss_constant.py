@@ -8,9 +8,9 @@ contrast 2AFC location. After the stimuli appear, a target appears in only one
 location and a judgement (which interval had higher contrast?) is done in the
 location.
 
-This version will have constant stimuli presented and no feedback during the 
-block (to prevent calibration), instead of the previous staircase and trial-by-trial
-feedback. 
+This version will have constant stimuli presented and no feedback during the
+block (to prevent calibration), instead of the previous staircase and
+trial-by-trial feedback.
 
 """
 

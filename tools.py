@@ -605,11 +605,22 @@ def defloaterrorize(a):
     a = a/100.0
     return a
 
-def get_data(file_name=None):
+def get_data(file_name=None, even_or_odd=False):
     """
     Get the data from file, returning parameters, the line with variable names
     and a data_rec using these variable names.
 
+    Parameters
+    ----------
+
+    file_name : str
+          Full path to the file to be analyzed. If None, a gui opens to let
+          users choose the file in their file-system.
+          
+    even_or_odd : str
+       For split half analysis, this variable allows choosing to output only
+       even or only odd trials from the file
+    
     """
 
     if file_name is None: 
@@ -636,7 +647,14 @@ def get_data(file_name=None):
         data_rec = csv2rec(file_name)
     except ValueError:
         p = []
-    
+
+    # For split half analysis, you might want to pull only even or only odd
+    # trials (and compare...):
+    if even_or_odd == 'odd':
+        data_rec = data_rec[::2] 
+    elif even_or_odd == 'even':
+        data_rec = data_rec[1::2]
+            
     return p,l,data_rec
 
 
@@ -734,35 +752,39 @@ def fit_th(x, y, initial, fit_func='cumgauss'):
 
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                      fit_func='cumgauss', log_scale=False, boot=1000,
-                     leave_one_out=False,
-                     verbose=True):
+                     leave_one_out=False, verbose=True, even_or_odd=False):
     """
     This analyzes data from the constant stimuli experiment
 
     Parameters
     ----------
-    data_file: str,
+    data_file : str,
         the full path to a file with some data. If this is not provided, the
         user will be prompted to navigate to the file with a file-browser. 
 
-    fig_name: str, 
+    fig_name : str, 
         The name of the figure to save. If not provided, the figure will not be
         saved.
-    cue_cond: str,
+    cue_cond : str,
         whether to analyze the 'cued' condition or the 'other' condition.
 
-    fit_func: str,
+    fit_func : str,
          What type of function to fit to the data ('cumgauss' or 'weib')
 
-    log_scale: bool,
+    log_scale : bool,
         Whether to transform things into a log scale (FWIW).
 
-    boot: int,
+    boot : int,
         The number of iterations of fitting in the boot-strap procedure.
 
+    leave_one_out : bool
+        Whether to 
+
+    even_or_odd : str
+        Whether to take only even or only odd trials in each sample.
     """
 
-    p,l,data_rec = get_data(data_file)
+    p,l,data_rec = get_data(data_file, even_or_odd=even_or_odd)
 
     if cue_cond == 'cued':
         cue_cond_idx = np.where(data_rec['cue_side']==data_rec['ask_side'])[0]
@@ -910,7 +932,8 @@ def get_df(n_subjects,
 	   boots=1,
 	   exclude=None,
 	   verbose=True,
-	   cue_conds=['cued', 'other', 'neutral']):
+	   cue_conds=['cued', 'other', 'neutral'],
+           even_or_odd=False):
 
     """
 
@@ -977,7 +1000,8 @@ def get_df(n_subjects,
                                               log_scale=False,
                                               fit_func=fit_func,
                                               boot=boots,
-                                              verbose=verbose)
+                                              verbose=verbose,
+                                              even_or_odd=even_or_odd)
 
                         df[this_sub][p[center_k],p[surr_k]][cue]=this
                         df2['subject'].append(this_sub)
