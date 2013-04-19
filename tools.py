@@ -467,7 +467,7 @@ class Staircase(object):
         #correct=None):
         self.record.append(self.value)
         
-    def analyze(self,guess=0.5,flake=0.01,slope=3.5,fig_name=None,
+    def analyze(self, guess=0.5, flake=0.01, slope=3.5, fig_name=None,
                 bootstrap_n=1000):
         """
         Perform a psychometric curve analysis of the data in the staircase and
@@ -780,7 +780,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
     leave_one_out : bool
         Whether to 
 
-    even_or_odd : str
+    even_or_odd : bool
         Whether to take only even or only odd trials in each sample.
     """
 
@@ -845,7 +845,18 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
 
         if verbose:
             print("Using the %s function to analyze this"%fit_func)
-        this_fit = fit_th(x, y, initial, fit_func)
+
+        if even_or_odd == 'even':
+            fit_x = x[::2]
+            fit_y = y[::2]
+        elif even_or_odd == 'odd':
+            fit_x = x[1::2]
+            fit_y = y[1::2]
+        else:
+            fit_x = x
+            fit_y = y
+
+        this_fit = fit_th(fit_x, fit_y, initial, fit_func)
         # Store stuff for plotting:
         fits.append(this_fit)
         keep_x.append(x)
@@ -1003,6 +1014,12 @@ def get_df(n_subjects,
                                               verbose=verbose,
                                               even_or_odd=even_or_odd)
 
+                        for ii in range(len(this['fit'][0])):
+                            if this['fit'][0][ii] > 1.0:
+                                print this['fit'][0][ii]
+                                this['fit'][0][ii] = 1.0
+                                print this['fit'][0][ii]
+                                
                         df[this_sub][p[center_k],p[surr_k]][cue]=this
                         df2['subject'].append(this_sub)
                         df2['abs_ori'].append(str(p[center_k]))
@@ -1072,7 +1089,6 @@ def save_spss_files(df, path='/Users/arokem/Dropbox/att_ss'):
     file_out_sl.close()
 
 
-
 def coeff_of_determination(data, model, axis=-1):
     """
 
@@ -1104,7 +1120,7 @@ def coeff_of_determination(data, model, axis=-1):
 def split_half(df, cue, center_ori, surr_ori, perm=None):
     """
 
-    Get y from one (randimly chosen) half of the data and params from the other
+    Get y from one (randomly chosen) half of the data and params from the other
     half.
     
     """
@@ -1400,6 +1416,43 @@ def model_evaluation_loo(df):
 
     
     return RR1,RR2,RR3
+
+def bootstrap_mean(x, alpha=0.05, b=1000):
+    """
+    Calculate bootstrap 1-alpha percentile CI of the mean from a sample x
+
+    Parameters
+    ----------
+    x : 1d array
+
+    alpha : float
+      Confidence interval is defined as the 
+
+    b : int
+       The number of bootstrap samples
+
+    Returns
+    -------
+    lb, ub : the lower and upper bounds of the confidence interval
+    
+    """
+    means = np.empty(b)
+    
+    for ii in xrange(b):
+        idx = np.random.randint(0, len(x), len(x))
+        means[ii] = np.mean(x[idx])
+
+    sort_means = np.sort(means)
+    lb_idx = int(b * alpha/2)
+    ub_idx = int(b * (1-(alpha/2)))
+
+    return sort_means[lb_idx], sort_means[ub_idx]
+    
+        
+        
+
+
+    
 
 
 
