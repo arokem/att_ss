@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
 
         
-    # calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
+    calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
                                                          # setting of where
                                                          # monitors are stored
 

@@ -4,7 +4,7 @@ from psychopy.sound import Sound
 
 p = dict(
     # Display:
-    monitor = 'ESI_psychophys',
+    monitor = 'testMonitor',#'ESI_psychophys',
     full_screen = False,
     screen_number = 0, #1,
     refresh_rate = 60, # Hz
@@ -32,8 +32,8 @@ p = dict(
     start_amp = 0.05,
     step = 0.01, 
     # Timing: 
-    cue_dur = 0.5,
-    cue_to_stim = 0.3,
+    cue_dur = 5.5,
+    cue_to_stim = 5.3,
     stim_dur = 0.38,
     stim_to_stim = 0.4,
     iti = .2,
