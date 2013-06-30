@@ -284,14 +284,14 @@ def compound_sound(freqs, duration, samples_per_sec=None):
 
     return snd
     
-def start_data_file(subject_id):
+def start_data_file(subject_id, data_dir='./data'):
 
     """Start a file object into which you will write the data, while making
     sure not to over-write previously existing files """
     
     #Check the data_file:
     
-    list_data_dir = os.listdir('./data')
+    list_data_dir = os.listdir(data_dir)
 
     i=1
     this_data_file = '%s_%s_%s_att_ss.csv'%(subject_id,
@@ -304,7 +304,7 @@ def start_data_file(subject_id):
                                                   time.strftime('%m%d%Y'),i)
         
     #Open the file for writing into:
-    f = file('./data/%s'%this_data_file,'w')
+    f = file('%s/%s'%(data_dir, this_data_file),'w')
 
     #Write some header information
     f.write('# Time : %s#\n'%(time.asctime()))
