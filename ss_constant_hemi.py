@@ -54,7 +54,7 @@ def make_stimuli(p, win):
                                        color=p.rgb * p.surr_contrast,
                                        size=p.surr_size,
                                        sf = p.sf,
-                                       pos=[p.ecc, p.height],
+                                       pos=[-p.ecc, p.height],
                                        ori = p.surr_ori),
                             d=visual.PatchStim(win,
                                        tex='sin',
@@ -62,7 +62,7 @@ def make_stimuli(p, win):
                                        color=p.rgb * p.surr_contrast,
                                        size=p.surr_size,
                                        sf = p.sf,
-                                       pos=[p.ecc, -p.height],
+                                       pos=[-p.ecc, -p.height],
                                        ori = p.surr_ori)),
                     r=dict(u=visual.PatchStim(win,
                                         tex='sin',
@@ -70,24 +70,24 @@ def make_stimuli(p, win):
                                         color=p.rgb * p.surr_contrast,
                                         size=p.surr_size,
                                         sf = p.sf,
-                                        pos=[-p.ecc, p.height],
-                                        ori = p.surr_ori)
+                                        pos=[p.ecc, p.height],
+                                        ori = p.surr_ori),
                                d=visual.PatchStim(win,
                                         tex='sin',
                                         mask='circle',
                                         color=p.rgb * p.surr_contrast,
                                         size=p.surr_size,
                                         sf = p.sf,
-                                        pos=[-p.ecc, -p.height],
+                                        pos=[p.ecc, -p.height],
                                         ori = p.surr_ori)))
     
-    center = dict(r=dict(u=visual.PatchStim(win,
+    center = dict(l=dict(u=visual.PatchStim(win,
                                      tex='sin',
                                      mask='circle',
                                      color=p.rgb,
                                      size=p.center_size,
                                      sf = p.sf,
-                                     pos = [p.ecc, p.height],
+                                     pos = [-p.ecc, p.height],
                                      ori = p.center_ori),
 
                          d=visual.PatchStim(win,
@@ -96,10 +96,10 @@ def make_stimuli(p, win):
                                      color=p.rgb,
                                      size=p.center_size,
                                      sf = p.sf,
-                                     pos = [p.ecc, -p.height],
+                                     pos = [-p.ecc, -p.height],
                                      ori = p.center_ori)),
                                      
-                         u=visual.PatchStim(win,
+                  r=dict(u=visual.PatchStim(win,
                                      tex='sin',
                                      mask='circle',
                                      color=p.rgb,
@@ -114,23 +114,9 @@ def make_stimuli(p, win):
                                      size=p.center_size,
                                      sf = p.sf,
                                      pos = [p.ecc, -p.height],
-                                     ori = p.center_ori)),
-                                     
-                                     )
-
-    divider = dict(r=dict(u=visual.PatchStim(win,
-                                      tex = np.ones((p.res,p.res)),
-                                      mask='circle',
-                                      color= p.div_color * p.rgb,
-                                      size=p.center_size*1.05,
-                                      pos = [p.ecc, p.height]),
-                           d=visual.PatchStim(win,
-                                      tex = np.ones((p.res,p.res)),
-                                      mask='circle',
-                                      color= p.div_color * p.rgb,
-                                      size=p.center_size*1.05, 
-                                      pos = [p.ecc, -p.height])),
-                    l=dict(u=visual.PatchStim(win,
+                                     ori = p.center_ori)))
+                                    
+    divider = dict(l=dict(u=visual.PatchStim(win,
                                       tex = np.ones((p.res,p.res)),
                                       mask='circle',
                                       color= p.div_color * p.rgb,
@@ -141,7 +127,19 @@ def make_stimuli(p, win):
                                       mask='circle',
                                       color= p.div_color * p.rgb,
                                       size=p.center_size*1.05, 
-                                      pos = [-p.ecc, p.height])))
+                                      pos = [-p.ecc, -p.height])),
+                    r=dict(u=visual.PatchStim(win,
+                                      tex = np.ones((p.res,p.res)),
+                                      mask='circle',
+                                      color= p.div_color * p.rgb,
+                                      size=p.center_size*1.05,
+                                      pos = [p.ecc, p.height]),
+                           d=visual.PatchStim(win,
+                                      tex = np.ones((p.res,p.res)),
+                                      mask='circle',
+                                      color= p.div_color * p.rgb,
+                                      size=p.center_size*1.05, 
+                                      pos = [p.ecc, -p.height])))
 
     return fix, center, surround, divider
 
@@ -175,7 +173,7 @@ if __name__ == "__main__":
     p.save(f)
     
     f = save_data(f, 'trial', 'side', 'contrast1','contrast2'
-                   'answer','ask_contrast', 'rt')
+                   'answer', 'rt')
 
     fix, center, surround, divider = make_stimuli(p, win)
                   
@@ -235,18 +233,24 @@ if __name__ == "__main__":
 
         # Get a clock just for this:
         stim_clock = core.Clock()
-        t = 0 
-        # Set the contrasts of both of the center stimuli:
-        this_center[surround_ud].setColor(center_contrast[trial] * p.rgb)
-        this_surround[surround_ud].setColor(surr_contrast * p.rgb)
+        t = 0
+
+        this_center_contrast = np.max([center_contrast[trial], 0.01]) * p.rgb
+        this_center_comparison = np.max(
+            [center_contrast[trial] + center_comparison[trial], 0.01]) * p.rgb
         
-        this_center[comparison_ud].setColor((center_contrast[trial] +
-                                             center_comparison[trial]) * p.rgb)
+        # Set the contrasts of both of the center stimuli:
+        this_center[surround_ud].setColor(this_center_contrast)
+        this_surround[surround_ud].setColor(p.surr_contrast * p.rgb)
+        
+        this_center[comparison_ud].setColor(this_center_comparison * p.rgb)
         this_surround[comparison_ud].setColor(0 * p.rgb)
+
         # Draw all yer elements:
-        for part in [this_center, this_divider, this_surround, fix]:
+        for part in [this_surround, this_divider, this_center]:
             for this_part in part:
-                this_part.draw()
+                part[this_part].draw()
+        for this in fix: this.draw()
 
         win.flip()
         # dbg:
@@ -280,11 +284,10 @@ if __name__ == "__main__":
 
         f = save_data(f,
                       trial,
-                      ask_side,
-                      contrasts[0],
-                      contrasts[1],
+                      this_side,
+                      center_contrast[trial],
+                      center_comparison[trial],
                       key,
-                      ask_contrast,
                       rt)
 
         # Is it time for a break?
