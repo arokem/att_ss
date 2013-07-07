@@ -17,8 +17,8 @@ monitors = [dict(monitor_name = 'cni_lcd', # name of the new monitor
             dict(monitor_name = 'testMonitor', # name of the new monitor
                  calib_file = 'dummy_calib.csv', # dummy photometer data
                  width = 32, # approximate width of the screen in cm
-                 distance = 100, # distance from the screen in cm
-                 size = [800, 500], # size of the screen in pixels
+                 distance = 57, # distance from the screen in cm. Set to be 1deg=1cm
+                 size = [800, 600], # size of the screen in pixels
                  notes = """ Rough estimate of parameters on a laptop.
                  just for testing"""
                  ),
