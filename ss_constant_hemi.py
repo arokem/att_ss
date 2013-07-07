@@ -148,7 +148,7 @@ if __name__ == "__main__":
     p = Params('params_hemi')
     app = wx.App()
     app.MainLoop()
-    p.set_by_gui()
+    p.set_by_gui(full=False)
     # Different number of trials for different cue reliability conditions:
 
     # Just do 75 trials per block:
@@ -172,8 +172,7 @@ if __name__ == "__main__":
     f = start_data_file(p.subject, 'data_hemi')
     p.save(f)
     
-    f = save_data(f, 'trial', 'side', 'contrast1','contrast2'
-                   'answer', 'rt')
+    f = save_data(f, 'trial', 'side', 'surround','contrast1','contrast2','answer', 'rt')
 
     fix, center, surround, divider = make_stimuli(p, win)
                   
@@ -235,9 +234,9 @@ if __name__ == "__main__":
         stim_clock = core.Clock()
         t = 0
 
-        this_center_contrast = np.max([center_contrast[trial], 0.01]) * p.rgb
-        this_center_comparison = np.max(
-            [center_contrast[trial] + center_comparison[trial], 0.01]) * p.rgb
+        this_center_contrast = np.min([np.max([center_contrast[trial], 0.01]), 1.0]) * p.rgb
+        this_center_comparison = np.min([np.max(
+            [center_contrast[trial] + center_comparison[trial], 0.01]), 1.0]) * p.rgb
         
         # Set the contrasts of both of the center stimuli:
         this_center[surround_ud].setColor(this_center_contrast)
@@ -278,15 +277,12 @@ if __name__ == "__main__":
         core.wait(p.iti)
         event.clearEvents()  # keep the event buffer from overflowing
         
-        # Save this trial to file:
-        #    f = save_data(f, 'trial', 'side', 'contrast1','contrast2'
-        #                   'answer','ask_contrast', 'rt')
-
         f = save_data(f,
                       trial,
                       this_side,
-                      center_contrast[trial],
-                      center_comparison[trial],
+                      surround_ud,
+                      this_center['u'].color[0],
+                      this_center['d'].color[0],
                       key,
                       rt)
 
