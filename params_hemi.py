@@ -1,18 +1,14 @@
 import numpy as np
 from tools import sound_freq_sweep
-from psychopy.sound import Sound
 
 p = dict(
     # Display:
-    monitor = 'testMonitor',
-    full_screen = False,
-    screen_number = 0, #1,
+    monitor = 'VISTA_DellP1130',
+    full_screen = True,
+    screen_number = 1, #1,
     refresh_rate = 60, # Hz
-    # Sounds:
-    correct_sound = Sound(sound_freq_sweep(2000,2000,.1)),
-    incorrect_sound = Sound(sound_freq_sweep(8000, 200, .1)),
     # General:
-    fixation_size = 0.25,
+    fixation_size = 0.5,
     rgb = np.array([1.,1.,1.]),
     # Stimuli:
     res = 128,

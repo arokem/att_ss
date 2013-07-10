@@ -31,7 +31,8 @@ class Monitor(object):
         self.calib = {} 
         for d in r.dtype.fields:
             self.calib[d] = r[d]
-    
+        print self.calib.keys()
+        
     def calculate_gamma(self):
         """
         

@@ -42,5 +42,16 @@ monitors = [dict(monitor_name = 'cni_lcd', # name of the new monitor
                  notes = """
                  This is the psychophysics CRT used at the ESI Frankfurt
                  """
+                 ), 
+                             
+            dict(monitor_name = 'VISTA_DellP1130', # name of the new monitor
+                 calib_file = 'calibration_data_DellP1130.csv', #  photometer data
+                 width = 38, # width of the screen in cm
+                 distance = 57, # distance from the screen in cm
+                 size = [1024, 768], # size of the screen in pixels
+                 notes = """This is the Dell Trinitron in the psychophysics room 
+                 in the VISTA lab.
+                 """
                  )
+                 
                  ]

@@ -39,11 +39,11 @@ def make_stimuli(p, win):
     fs = p.fixation_size
 
     # Standard fixation:
-    fixation = visual.PatchStim(win, tex=None, mask = 'circle',color=0.5*p.rgb,
+    fixation = visual.PatchStim(win, tex=None, mask = 'circle',color=1.0*p.rgb,
                                 size= 0.5 * fs)
 
     fixation_surround = visual.PatchStim(win, tex=None, mask='circle',
-                                         color=-0.5*p.rgb,
+                                         color=-1*p.rgb,
                                          size=0.5 * fs * 1.5)
 
     fix = [fixation_surround, fixation]
@@ -160,10 +160,10 @@ if __name__ == "__main__":
                                                          # monitors are stored
 
     mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
-                                   #argument to win:
-                                   
+                                   #argument to win:    
     
     win = visual.Window(
+        size=mon.getSizePix(),
         monitor=mon,
         units='deg',
         screen=p.screen_number,
