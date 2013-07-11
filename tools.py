@@ -86,7 +86,7 @@ if has_wx:
             if surr_ori:
                 self.surr_ori = surr_ori
             else:
-                self.surr_ori = 0
+                self.surr_ori = None
 
             if self.full:
                 if swt:
@@ -142,21 +142,21 @@ class Params(object):
             self.__setattr__(k,im.p[k])
             self._dont_touch.append(k)
 
-    def __setattr__(self,name,value):
-        """
-        
-        Overloading __setattr__, such that attributes cant be changed once they
-        are set, unless they are explicitely removed from the _dont_touch list.
+#    def __setattr__(self,name,value):
+#       """
+#        
+#        Overloading __setattr__, such that attributes cant be changed once they
+#        are set, unless they are explicitely removed from the _dont_touch list.
 
-        """
+#        """
 
-        if name == '_dont_touch':
-            super.__setattr__(self,name,value) 
-        elif name in self._dont_touch:
-            raise ValueError("Parameter %s is protected, please don't touch!"%name)
-        else:
-            super.__setattr__(self,name,value)
-            self._dont_touch.append(name)
+#        if name == '_dont_touch':
+#            super.__setattr__(self,name,value) 
+#        elif name in self._dont_touch:
+#            raise ValueError("Parameter %s is protected, please don't touch!"%name)
+#        else:
+#            super.__setattr__(self,name,value)
+#            self._dont_touch.append(name)
 
     def set_by_gui(self, full=True):
         """
