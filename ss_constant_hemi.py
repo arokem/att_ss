@@ -22,6 +22,9 @@ from psychopy import visual, core, misc, event
 import psychopy.monitors.calibTools as calib
 import os
 
+# We'll need this to analyze the data:
+import hemi_analysis 
+
 def wait_for_key():
     response = False
     while not response:
@@ -152,8 +155,8 @@ if __name__ == "__main__":
     # Different number of trials for different cue reliability conditions:
 
     # Just do 75 trials per block:
-    n_trials = 250
-    break_trials = 50 # To be on the safe side.
+    n_trials = p.n_trials
+    break_trials = p.break_trials # To be on the safe side.
     
     calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
                                                          # setting of where
@@ -299,3 +302,4 @@ if __name__ == "__main__":
     fig_stem = f.name.split('/')[-1].split('.')[0]
 
     # XXX Need to put the analysis here...
+    hemi_analysis.analyze(f.name, fig_name='data_hemi/%s_cued.png'%fig_stem)

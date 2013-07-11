@@ -3,9 +3,9 @@ from tools import sound_freq_sweep
 
 p = dict(
     # Display:
-    monitor = 'VISTA_DellP1130',
-    full_screen = True,
-    screen_number = 1, #1,
+    monitor = 'testMonitor',
+    full_screen = False,
+    screen_number = 0, #1,
     refresh_rate = 60, # Hz
     # General:
     fixation_size = 0.5,
@@ -28,5 +28,7 @@ p = dict(
     cue_to_stim = 0.3,
     stim_dur = 0.2,
     iti = .2,
+    n_trials=250,
+    break_trials=50,
     )
 
