@@ -153,7 +153,13 @@ if __name__ == "__main__":
     app.MainLoop()
     p.set_by_gui(full=False)
     # Different number of trials for different cue reliability conditions:
-
+    
+    # This is like saying we don't want a surround at all: 
+    if p.surr_ori is None:
+        p.surr_contrast = 0
+        # Now that the contrast is null, we can safely set this to anything we want:
+        p.surr_ori = 0
+        
     # Just do 75 trials per block:
     n_trials = p.n_trials
     break_trials = p.break_trials # To be on the safe side.
