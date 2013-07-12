@@ -105,7 +105,7 @@ if has_wx:
                 if cue_reliability:
                     self.cue_reliability = False
                 else:
-                    self.cue_reliability = 0.7
+                    self.cue_reliability = False
 
             self.Close()
 
