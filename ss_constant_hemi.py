@@ -7,7 +7,7 @@ forthcoming paper...), examine surround suppression in each hemisphere.
 
 In this version, the judgement is a simultaneous contrast comparison. Which has
 higher contrast, the one on top or the one on the bottom? In each trial, the
-stimuli can appear in either hemi-field, and they are brief (120 msec),
+stimuli can appear in either hemi-field, and they are brief (120-200 msec),
 encouraging fixation that way.
 
 Assessment of bias can then be done on a per-hemifield basis, or on both
@@ -308,4 +308,4 @@ if __name__ == "__main__":
     fig_stem = f.name.split('/')[-1].split('.')[0]
 
     # XXX Need to put the analysis here...
-    hemi_analysis.analyze(f.name, fig_name='data_hemi/%s_cued.png'%fig_stem)
+    hemi_analysis.analyze(f.name, fig_name='data_hemi/%s.png'%fig_stem)
