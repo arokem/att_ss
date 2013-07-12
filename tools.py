@@ -1,7 +1,10 @@
 import os
 import time
-import pandas as pd
-
+try: 
+    import pandas as pd
+    has_pd = True
+except:
+    has_pd = False
 import numpy as np
 try:
     import wx

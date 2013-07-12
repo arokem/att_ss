@@ -3,10 +3,10 @@ from tools import sound_freq_sweep
 
 p = dict(
     # Display:
-    monitor = 'testMonitor',
-    full_screen = False,
-    screen_number = 0, #1,
-    refresh_rate = 60, # Hz
+    monitor = 'VISTA_DellP1130',
+    full_screen = True,
+    screen_number = 1,
+    refresh_rate = 120, # Hz. I don;t believe we really need this... 
     # General:
     fixation_size = 0.5,
     rgb = np.array([1.,1.,1.]),
@@ -19,7 +19,8 @@ p = dict(
     center_size = 3,
     surr_size = 8,
     center_contrast = np.array([0.15, 0.3, 0.6]),
-    center_comparison = np.array( [-0.6, -0.3, -0.2,-0.15, -0.1, 0., 0.1, 0.15, 0.2, 0.3, 0.6]),
+    #center_comparison = np.array( [-0.6, -0.3, -0.2,-0.15, -0.1, 0., 0.1, 0.15, 0.2, 0.3, 0.6]), # Symmetrical around physical 
+    center_comparison = np.array( [-0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.25, 0.3, 0.35, 0.4, 0.85]), # Symmetrical around 'perceived'
     surr_contrast = 1,
     div_color = -1,
     # Timing: 
