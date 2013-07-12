@@ -773,7 +773,8 @@ def fit_th(x, y, initial, fit_func='cumgauss'):
 
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                      fit_func='cumgauss', log_scale=False, boot=1000,
-                     leave_one_out=False, verbose=True, even_or_odd=False):
+                     leave_one_out=False, verbose=True, even_or_odd=False,
+                     clamp_to_0_1=True):
     """
     This analyzes data from the constant stimuli experiment
 
@@ -849,6 +850,9 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
 
         if log_scale:
             x = np.log10(x)
+        if clamp_to_0_1:
+            x[np.where(x>1)] = 1
+            x[np.where(x<0)] = 0
         
         # Begin by guessing that the mean is the same as the contrast shown
         # (no bias):

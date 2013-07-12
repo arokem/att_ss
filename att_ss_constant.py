@@ -21,6 +21,9 @@ from psychopy import visual, core, misc, event
 import psychopy.monitors.calibTools as calib
 import os
 
+def clamp_to_0_1(c):
+    return np.min([np.max([c,  0]), 1])
+    
 def wait_for_key():
     response = False
     while not response:
@@ -35,7 +38,7 @@ if __name__ == "__main__":
     p = Params('params_constant')
     app = wx.App()
     app.MainLoop()
-    p.set_by_gui()
+    p.set_by_gui(full=False)
     # Different number of trials for different cue reliability conditions:
 
     # If this is a predictive cue, do 250 trials, with breaks every 50:
@@ -45,25 +48,29 @@ if __name__ == "__main__":
 
     # If this is a neutral cue, do 75 trials, with no break:
     else:
-        n_trials = 75
-        break_trials = 76 # To be on the safe side.
+        n_trials = 200
+        break_trials = 50 # 
     
-
-
+    if p.surr_ori is None:
+        p.center_comparison = np.array( [-0.6, -0.3, -0.2,-0.15, -0.1, 0., 0.1, 0.15, 0.2, 0.3, 0.6])  # Symmetrical around physical
+        p.surr_contrast = 0
+        # Now that the contrast is null, we can safely set this to anything we want (needs to be defined):
+        p.surr_ori = 0    
         
     calib.monitorFolder = os.path.join('.','calibration')# over-ride the usual
                                                          # setting of where
                                                          # monitors are stored
 
-    # mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
+    mon = calib.Monitor(p.monitor) #Get the monitor object and pass that as an
                                    #argument to win:
                                    
     
     win = visual.Window(
-        monitor=p.monitor,
-        units='deg',
-        screen=p.screen_number,
-        fullscr=p.full_screen)
+            size=mon.getSizePix(),
+            monitor=p.monitor,
+            units='deg',
+            screen=p.screen_number,
+            fullscr=p.full_screen)
 
     f = start_data_file(p.subject)
     p.save(f)
@@ -120,9 +127,12 @@ if __name__ == "__main__":
                                         lineColor=-1*p.rgb,
                                     vertices=s)
         # Show an uninformative diamond at the same time (neutral cue)
-        cue = dict(r=dict(cue=neutral_cue,surr=neutral_surr),
-                   l=dict(cue=neutral_cue,surr=neutral_surr))
-        
+        #cue = dict(r=dict(cue=neutral_cue,surr=neutral_surr),
+        #           l=dict(cue=neutral_cue,surr=neutral_surr))
+        # Let's make the cue invisible: 
+        cue = dict(r=dict(cue=fixation, surr=fixation_surround),
+                        l = dict(cue=fixation, surr=fixation_surround))
+                        
     surround = dict(r=visual.PatchStim(win,
                                        tex='sin',
                                        mask='circle',
@@ -222,14 +232,13 @@ if __name__ == "__main__":
         # whether the first contrast is higher or lower than that, where the
         # first interval contrast was set pseudo-randomly above:
         ask_contrast = center_comparison1[trial]
-        contrasts[ask_side] = [
-            center_contrast1[trial] + ask_contrast, 
-            center_contrast1[trial]
-            ]
+        contrast_1_1 = clamp_to_0_1(center_contrast1[trial] + ask_contrast)
+        contrast_1_2 = clamp_to_0_1(center_contrast1[trial])
+        contrasts[ask_side] = [contrast_1_1, contrast_1_2]
 
         # For the foil side, the second contrast is always 0: 
         contrasts[foil_side] = [
-            center_contrast2[trial] + center_comparison2[trial], 
+            clamp_to_0_1(center_contrast2[trial] + center_comparison2[trial]),
                 0]
         
         #Draw the cue, wait for the alloted time and move on:
