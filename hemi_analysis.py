@@ -60,12 +60,20 @@ def err_func(params, x, y, func):
         """
         return y - func(x, *params)
 
-def analyze(f_name, fig_name=None):
+def analyze(f_name, fig_name=None, boot=1000):
     """
     """
     params_out = []
     
     p, l, data_rec = tools.get_data(f_name)
+
+    if np.abs(p[' center_ori'] - p[' surr_ori'])==0:
+	block = 'para'
+    elif np.abs(p[' center_ori'] - p[' surr_ori'])>0:
+	block = 'ortho'
+    if p[' surr_contrast'] == 0:
+	block= 'none'
+    
     base_conds = []
     for x in p['center_contrast'].split(' '):
 	    # This is probably not the safest way to do this:
@@ -107,6 +115,37 @@ def analyze(f_name, fig_name=None):
 	initial = 0,0.5
 	params, _ = opt.leastsq(err_func, initial, args=(x, y, cumgauss))
 	params_out.append([base_contrast, params])
+
+        boot_th = []
+        boot_sl = []
+	
+        # Bootstrap estimate the parameters
+        for b in range(boot):
+            # Choose this boot sample
+	    boot_idx = np.random.randint(0, len(this_comp), len(this_comp))
+	    boot_comp = this_comp[boot_idx]
+	    boot_ans = this_ans[boot_idx]
+	    x = np.unique(boot_comp)
+	    y = []
+	    n = []
+	    for c in x: 
+		idx = np.where(boot_comp == c)
+		n.append(float(len(idx[0])))
+		y.append(len(np.where(boot_ans[idx] == 1)[0])/n[-1])
+	    initial = 0,0.5
+	    params, _ = opt.leastsq(err_func, initial, args=(x, y, cumgauss))
+	    
+            boot_th.append(params[0])
+            boot_sl.append(params[1])
+            
+        sort_th = np.sort(boot_th)
+        sort_sl = np.sort(boot_sl)
+
+        boot_th_ub = sort_th[0.84*boot]
+        boot_th_lb = sort_th[0.16*boot]
+        boot_sl_ub = sort_sl[0.84*boot]
+        boot_sl_lb = sort_sl[0.16*boot]
+
 	if fig_name is not None:
 	    x_fine = np.arange(0,1,0.01)
 	    ax.plot(x_fine, cumgauss(x_fine, params[0], params[1]))
@@ -114,9 +153,15 @@ def analyze(f_name, fig_name=None):
 	    ax.set_xlim([0,1])
 	    ax.plot([base_contrast, base_contrast],
 		    [0,1], '--', color=colors[base_idx])
-	    fig.savefig(fig_name)
+	    ax.text(0.7, 0.1 + 0.05 * base_idx,
+		    'PSE: %.2f+/-%.2f, JND: %.2f+/-%.2f'%(params_out[-1][1][0],
+							  boot_th_ub-boot_th_lb,
+							  params_out[-1][1][1],
+							  boot_sl_ub-boot_sl_lb))
+    ax.set_title(block)	    
+    fig.savefig(fig_name)
 	    
-    return params_out
+    return block, params_out
 
 
 ## def analyze(file_name):
