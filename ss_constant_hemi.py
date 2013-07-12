@@ -156,8 +156,9 @@ if __name__ == "__main__":
     
     # This is like saying we don't want a surround at all: 
     if p.surr_ori is None:
+        p.center_comparison = np.array( [-0.6, -0.3, -0.2,-0.15, -0.1, 0., 0.1, 0.15, 0.2, 0.3, 0.6])  # Symmetrical around physical
         p.surr_contrast = 0
-        # Now that the contrast is null, we can safely set this to anything we want:
+        # Now that the contrast is null, we can safely set this to anything we want (needs to be defined):
         p.surr_ori = 0
         
     # Just do 75 trials per block:
@@ -306,6 +307,4 @@ if __name__ == "__main__":
     # fit function:
 
     fig_stem = f.name.split('/')[-1].split('.')[0]
-
-    # XXX Need to put the analysis here...
     hemi_analysis.analyze(f.name, fig_name='data_hemi/%s.png'%fig_stem)
