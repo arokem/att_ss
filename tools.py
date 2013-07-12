@@ -813,7 +813,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         cue_cond_idx = np.where(data_rec['cue_side']!=data_rec['ask_side'])[0]
 
     center_contrasts = [float(t) for t in
-    p['center_contrast'].split('[')[1].split(']')[0].split(' ')[1::2]]
+    p['center_contrast'].split('[')[1].split(']')[0].split(' ') if t !='' ]
     
     base_contrast = []
     for i,ask_side in enumerate(data_rec['ask_side'][cue_cond_idx]):
