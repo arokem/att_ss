@@ -752,7 +752,8 @@ def fit_th(x, y, initial, fit_func='cumgauss'):
 
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                      fit_func='cumgauss', log_scale=False, boot=1000,
-                     leave_one_out=False, verbose=True, even_or_odd=False):
+                     leave_one_out=False, verbose=True, even_or_odd=False,
+                     distractor_high=None, distractor_low=None):
     """
     This analyzes data from the constant stimuli experiment
 
@@ -782,6 +783,10 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
 
     even_or_odd : bool
         Whether to take only even or only odd trials in each sample.
+
+    distractor_high, distractor_low : float
+       If this is None (default), it's just ignored. Otherwise, these are the
+       low and high bounds on selecting distractor contrasts
     """
 
     p,l,data_rec = get_data(data_file, even_or_odd=even_or_odd)
@@ -795,7 +800,7 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
     p['center_contrast'].split('[')[1].split(']')[0].split(' ')[1::2]]
     
     base_contrast = []
-    for i,ask_side in enumerate(data_rec['ask_side'][cue_cond_idx]):
+    for i, ask_side in enumerate(data_rec['ask_side'][cue_cond_idx]):
         base_contrast.append(data_rec[ask_side + '_contrast2'][cue_cond_idx][i])
 
     if fig_name is not None: 
@@ -840,8 +845,37 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
 
         # Generate the y axis:
         y = []
-        for i in range(len(this_ans)):
-            y.append(np.mean(this_ans[this_ask==this_ask[i]]))
+
+        # If we want to select trials by distractor, we'll need to pay
+        # attention to that right about here:
+        if distractor_high is not None:
+            other_contrast = []
+            for i in range(len(this_ans)):
+                if data_rec['ask_side'][i] == 'r':
+                    other_contrast.append(data_rec['l_contrast1'][i])
+                elif data_rec['ask_side'][i] == 'l':
+                    other_contrast.append(data_rec['r_contrast1'][i])
+
+            other_contrast = np.array(other_contrast)
+            distract_idx = np.where(np.logical_and(
+                                    other_contrast > distractor_low,
+                                    other_contrast < distractor_high))
+
+            # We're going to curtail both of these puppies:
+            x = x[distract_idx]
+            
+            for i in range(len(x)):
+                # Need to take into account that this is in a new
+                # coordinate-system! 
+                y.append(np.mean(this_ans[distract_idx][x==x[i]]))
+
+        else:
+            for i in range(len(this_ans)):
+                y.append(np.mean(this_ans[this_ask==this_ask[i]]))
+
+        # Make sure: 
+        y = np.array(y)
+        x = np.array(x)
 
         if verbose:
             print("Using the %s function to analyze this"%fit_func)
@@ -944,7 +978,9 @@ def get_df(n_subjects,
 	   exclude=None,
 	   verbose=True,
 	   cue_conds=['cued', 'other', 'neutral'],
-           even_or_odd=False):
+           even_or_odd=False,
+           distractor_high=None,
+           distractor_low=None):
 
     """
 
@@ -1012,13 +1048,15 @@ def get_df(n_subjects,
                                               fit_func=fit_func,
                                               boot=boots,
                                               verbose=verbose,
-                                              even_or_odd=even_or_odd)
+                                              even_or_odd=even_or_odd,
+                                              distractor_high=distractor_high,
+                                              distractor_low=distractor_low)
 
                         for ii in range(len(this['fit'][0])):
                             if this['fit'][0][ii] > 1.0:
-                                print this['fit'][0][ii]
+                                #print this['fit'][0][ii]
                                 this['fit'][0][ii] = 1.0
-                                print this['fit'][0][ii]
+                                #print this['fit'][0][ii]
                                 
                         df[this_sub][p[center_k],p[surr_k]][cue]=this
                         df2['subject'].append(this_sub)
@@ -1040,7 +1078,10 @@ def get_df(n_subjects,
                                                   log_scale=False,
                                                   fit_func=fit_func,
                                                   boot=boots,
-                                                  verbose=verbose)
+                                                  verbose=verbose,
+                                                  even_or_odd=even_or_odd,
+                                                distractor_high=distractor_high,
+                                                distractor_low=distractor_low)
 
                     df[this_sub][p[center_k],p[surr_k]]['neutral']=this
                     df2['subject'].append(this_sub)
