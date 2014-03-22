@@ -753,7 +753,8 @@ def fit_th(x, y, initial, fit_func='cumgauss'):
 def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
                      fit_func='cumgauss', log_scale=False, boot=1000,
                      leave_one_out=False, verbose=True, even_or_odd=False,
-                     distractor_high=None, distractor_low=None):
+                     distractor_high=None, distractor_low=None,
+                     analyze_distractor=False ):
     """
     This analyzes data from the constant stimuli experiment
 
@@ -787,6 +788,11 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
     distractor_high, distractor_low : float
        If this is None (default), it's just ignored. Otherwise, these are the
        low and high bounds on selecting distractor contrasts
+
+    analyze_distractor : bool
+        When set to True, the curves are of the distractor contrast instead of
+        the target contrast.
+
     """
 
     p,l,data_rec = get_data(data_file, even_or_odd=even_or_odd)
@@ -831,6 +837,16 @@ def analyze_constant(data_file=None, fig_name=None, cue_cond='cued',
         this_ans = 1 - (data_rec['answer'][cue_cond_idx][c_idx] - 1) 
         x = np.array(contrast) + this_ask
 
+        if analyze_distractor:
+            x = []
+            for i in range(len(this_ans)):
+                if data_rec['ask_side'][i] == 'r':
+                    x.append(data_rec['l_contrast1'][i] -
+                             data_rec['l_contrast2'][i])
+                elif data_rec['ask_side'][i] == 'l':
+                    x.append(data_rec['r_contrast1'][i] -
+                             data_rec['r_contrast2'][i])
+        
         if log_scale:
             x = np.log10(x)
         
@@ -980,7 +996,8 @@ def get_df(n_subjects,
 	   cue_conds=['cued', 'other', 'neutral'],
            even_or_odd=False,
            distractor_high=None,
-           distractor_low=None):
+           distractor_low=None,
+           analyze_distractor=False):
 
     """
 
@@ -1050,7 +1067,8 @@ def get_df(n_subjects,
                                               verbose=verbose,
                                               even_or_odd=even_or_odd,
                                               distractor_high=distractor_high,
-                                              distractor_low=distractor_low)
+                                              distractor_low=distractor_low,
+                                      analyze_distractor=analyze_distractor)
 
                         for ii in range(len(this['fit'][0])):
                             if this['fit'][0][ii] > 1.0:
@@ -1081,7 +1099,8 @@ def get_df(n_subjects,
                                                   verbose=verbose,
                                                   even_or_odd=even_or_odd,
                                                 distractor_high=distractor_high,
-                                                distractor_low=distractor_low)
+                                                distractor_low=distractor_low,
+                                      analyze_distractor=analyze_distractor)
 
                     df[this_sub][p[center_k],p[surr_k]]['neutral']=this
                     df2['subject'].append(this_sub)
