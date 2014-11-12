@@ -194,7 +194,7 @@ class Params(object):
         """
 
         if open_and_close:
-            f = file(file_name,'w')
+            f = open(file_name,'w')
             for k in self.__dict__.keys():
                 if k[0]!='_': #Exclude 'private' variables ('_dont_touch')
                     f.write('# %s : %s \n'%(k,self.__dict__[k]))
@@ -304,7 +304,7 @@ def start_data_file(subject_id):
                                                   time.strftime('%m%d%Y'),i)
         
     #Open the file for writing into:
-    f = file('./data/%s'%this_data_file,'w')
+    f = open('./data/%s'%this_data_file,'w')
 
     #Write some header information
     f.write('# Time : %s#\n'%(time.asctime()))
@@ -362,7 +362,7 @@ class Text(object):
                     return
 
 def get_data(file_name):
-    file_read = file(file_name,'r')
+    file_read = open(file_name,'r')
     l = file_read.readline()
     p = {} #This will hold the params
     l = file_read.readline()
@@ -627,7 +627,7 @@ def get_data(file_name=None, even_or_odd=False):
         path_to_files = './data/'
         file_name =  str(gui.fileOpenDlg(path_to_files)[0])
     
-    file_read = file(file_name,'r')
+    file_read = open(file_name,'r')
     l = file_read.readline()
     p = {} #This will hold the params
     l = file_read.readline()
@@ -1025,7 +1025,7 @@ def get_df(n_subjects,
             sub_id = sub_id[:ex-1] + sub_id[ex:]
 
     if verbose:
-            print sub_id
+            print(sub_id)
 
 
     df = {}
@@ -1050,7 +1050,7 @@ def get_df(n_subjects,
                         print("File: %s"%this_file)
                 p,l,d = get_data(path_to_files + this_file)
                 # The key differs, depending on the 
-                if p.has_key('cue_reliability'):
+                if 'cue_reliability' in p.keys():
                     cue_reliability = p['cue_reliability']
                 else:
                     cue_reliability = p[' cue_reliability']
@@ -1118,8 +1118,8 @@ def save_spss_files(df, path='/Users/arokem/Dropbox/att_ss'):
     """
     Record stuff from the complicated df into files in an spss format
     """ 
-    file_out_th = file(path + '/file4SPSS_th.csv', 'w')
-    file_out_sl = file(path + '/file4SPSS_sl.csv', 'w')
+    file_out_th = open(path + '/file4SPSS_th.csv', 'w')
+    file_out_sl = open(path + '/file4SPSS_sl.csv', 'w')
 
     cue_conds = df[df.columns[0]][1].keys()
     
