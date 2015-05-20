@@ -13,3 +13,11 @@ We release this code and data under the [CC-3.0 license] (http://creativecommons
 - [Main analysis](http://nbviewer.ipython.org/github/arokem/att_ss/blob/master/GroupAnalysis.ipynb)
 - [Bootstrapping CI](http://nbviewer.ipython.org/github/arokem/att_ss/blob/master/BootStrappingCI.ipynb)
 - [Analysis by distractor contrast](http://nbviewer.ipython.org/github/arokem/att_ss/blob/master/AnalyzeByDistractor.ipynb)
+
+
+### To run this code yourself you will need: 
+
+- numpy, scipy, matplotlib, pandas
+- R 
+- rpy2 
+- The 'ez' R package
